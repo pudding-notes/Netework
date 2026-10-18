@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Netework 공부 자료</title>
+<style>
+:root{--bg:#F5F0E6;--card:#FFFBF2;--tx:#2A1C12;--tx2:#6B5B4E;--line:#2A1C12;--or:#D97757;--orD:#A9573A}
+@media (prefers-color-scheme:dark){:root{--bg:#1E1A17;--card:#2A2420;--tx:#F3ECE2;--tx2:#B8AA9C;--line:#F3ECE2;--or:#E08A6C;--orD:#F0A488}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.6}
+main{max-width:860px;margin:0 auto;padding:40px 16px 64px}
+h1{font-size:28px;margin:0 0 6px}
+.sub{color:var(--tx2);margin:0 0 32px}
+section{background:var(--card);border:3px solid var(--line);box-shadow:5px 5px 0 var(--or);padding:18px 20px;margin:0 0 24px}
+h2{font-size:20px;margin:0 0 12px;color:var(--orD)}
+ul{list-style:none;margin:0;padding:0}
+li{border-top:1px dashed color-mix(in srgb,var(--tx2) 50%,transparent)}
+li:first-child{border-top:none}
+a{display:flex;justify-content:space-between;gap:12px;padding:10px 4px;color:var(--tx);text-decoration:none;font-size:16px}
+a:hover{color:var(--or)}
+a small{color:var(--tx2);font-size:13px;white-space:nowrap}
+.note{color:var(--tx2);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Netework 공부 자료</h1>
+<p class="sub">각자 공부하면서 만든 HTML을 이름별 폴더로 모았어요. 눌러서 바로 열어 보세요.</p>
+<div id="list"><p class="note">목록을 불러오는 중…</p></div>
+</main>
+<script>
+const REPO='pudding-notes/Netework',BRANCH='main';
+const label=n=>n.replace(/\.html?$/i,'').replace(/[-_]+/g,' ');
+fetch('https://api.github.com/repos/'+REPO+'/git/trees/'+BRANCH+'?recursive=1')
+.then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+.then(d=>{
+  const html=d.tree.filter(t=>t.type==='blob'&&/\.html?$/i.test(t.path)&&t.path.includes('/'));
+  const appDirs=html.filter(t=>/(^|\/)index\.html?$/i.test(t.path)).map(t=>t.path.replace(/index\.html?$/i,''));
+  // 폴더 안에 index.html이 있으면 그 폴더를 하나의 프로젝트로 보여 줘요
+  const top=new Set(appDirs.filter(a=>!appDirs.some(b=>b!==a&&a.startsWith(b))));
+  const groups={};
+  html.forEach(t=>{
+    const owner=t.path.split('/')[0];
+    const app=[...top].find(a=>t.path.startsWith(a));
+    let item;
+    if(app){if(t.path.replace(/index\.html?$/i,'')!==app||!/index\.html?$/i.test(t.path))return;
+      item={href:app,name:label(app.split('/').filter(Boolean).pop()),kind:'폴더'};}
+    else item={href:t.path,name:label(t.path.split('/').pop()),kind:t.path.split('/').slice(1,-1).join('/')};
+    (groups[owner]=groups[owner]||[]).push(item);});
+  const owners=Object.keys(groups).sort();
+  if(!owners.length){document.getElementById('list').innerHTML='<p class="note">아직 올라온 HTML이 없어요.</p>';return;}
+  document.getElementById('list').innerHTML=owners.map(o=>'<section><h2>'+o+'</h2><ul>'+
+    groups[o].sort((a,b)=>a.href.localeCompare(b.href,'ko',{numeric:true})).map(i=>'<li><a href="'+encodeURI(i.href)+'"><span>'+i.name+'</span><small>'+(i.kind||'')+'</small></a></li>').join('')+'</ul></section>').join('');
+})
+.catch(e=>{document.getElementById('list').innerHTML='<p class="note">목록을 불러오지 못했어요 ('+e.message+'). 잠시 뒤 새로고침해 보세요.</p>';});
+</script>
+</body>
+</html>
