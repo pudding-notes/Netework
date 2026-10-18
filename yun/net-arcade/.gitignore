@@ -1,0 +1,21 @@
+# OS / 에디터
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# 의존성 · 빌드 산출물 (나중에 번들러를 쓸 경우 대비)
+node_modules/
+dist/
+.cache/
+
+# 파이썬 (보너스 소켓 CTF용)
+__pycache__/
+*.pyc
+.venv/
+
+# 로컬 메모·스크린샷
+scratch/
+*.log

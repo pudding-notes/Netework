@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Net Arcade</title>
+<link rel="stylesheet" href="shared/base.css">
+<style>
+  .hub { padding: 22px 28px; }
+  .hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; border-bottom: 2px solid var(--line); padding-bottom: 14px; }
+  .hero h1 { margin: 0; font-size: 32px; letter-spacing: 2px; color: var(--data); text-shadow: 3px 3px 0 #000; }
+  .hero .sub { color: var(--dim); margin: 6px 0 0; font-size: 13px; }
+  .meter { width: 280px; }
+  .meter .lbl { font-size: 12px; color: var(--dim); display: flex; justify-content: space-between; }
+  .meter .bar { height: 14px; background: var(--bg2); border: 2px solid var(--line); margin-top: 6px; }
+  .meter .bar i { display: block; height: 100%; background: var(--ok); width: 0; }
+  .tabs { display: flex; gap: 8px; margin: 14px 0 12px; align-items: center; }
+  .tab { background: var(--bg2); color: var(--dim); border: 2px solid var(--line); padding: 8px 16px; cursor: pointer; font-size: 14px; font-family: var(--font); }
+  .tab.on { color: var(--ink); border-color: var(--data); }
+  .tabs .sp { flex: 1; }
+  .tabs .note { font-size: 12px; color: var(--dim); }
+  .tabs .info-btn { padding: 6px 12px; font-size: 13px; border-color: var(--ack); color: var(--ack); }
+  .hide-opt { display: block; font-size: 12px; color: var(--dim); margin-top: 4px; cursor: pointer; }
+  .hide-opt input { vertical-align: -2px; margin-right: 6px; }
+  .games { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 172px; gap: 12px; }
+  .gcard { background: var(--panel); border: 2px solid var(--line); box-shadow: 4px 4px 0 #000; padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+  .gcard.ready { border-color: var(--data); }
+  .gcard .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .gcard .wk { font-size: 11px; color: var(--dim); }
+  .gcard .genre { font-size: 11px; color: var(--vio); text-align: right; }
+  .gcard h3 { margin: 0; font-size: 17px; }
+  .gcard h3 .inf { font-size: 12px; color: var(--ack); border: 1px solid var(--ack); padding: 0 4px; margin-left: 4px; vertical-align: 2px; }
+  .gcard p { margin: 0; font-size: 12px; line-height: 1.55; color: var(--dim); flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  .gcard .foot { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .gcard .chips { display: flex; gap: 3px; flex-wrap: wrap; }
+  .gcard .chips .qc-tag { font-size: 10px; padding: 2px 4px; }
+  .gcard .na-btn { padding: 6px 14px; font-size: 13px; }
+  .gcard .soon { font-size: 11px; color: var(--dim); border: 1px dashed var(--line); padding: 5px 8px; white-space: nowrap; }
+  .weeks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; height: 548px; }
+  .week { background: var(--bg2); border: 2px solid var(--line); padding: 10px 12px; overflow: hidden; }
+  .week h4 { margin: 0 0 6px; font-size: 14px; display: flex; justify-content: space-between; }
+  .week h4 span { color: var(--dim); font-weight: 400; }
+  .qrow { display: flex; gap: 6px; align-items: flex-start; padding: 4px 0; border-top: 1px solid var(--line); font-size: 11.5px; line-height: 1.45; }
+  .qrow .st { flex: 0 0 auto; width: 12px; color: var(--line); }
+  .qrow.done .st { color: var(--ok); }
+  .qrow .tx { flex: 1; color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .qrow.done .tx { color: var(--dim); }
+  .qrow a, .qrow .na { flex: 0 0 auto; font-size: 10px; text-decoration: none; max-width: 70px; text-align: right; }
+  .qrow .na { color: #3d4777; }
+</style>
+</head>
+<body>
+<div class="na-page">
+  <div class="fit-host">
+    <div class="fit-stage" id="stage">
+      <div class="app hub">
+        <div class="hero">
+          <div>
+            <h1>NET ARCADE</h1>
+            <p class="sub">네트워크구조및설계 · 강의 Quick Check를 게임으로 클리어하기 · 시간 제한 없이 차근차근</p>
+          </div>
+          <div class="meter">
+            <div class="lbl"><span>QUICK CHECK 클리어</span><b id="qcCount">0 / 32</b></div>
+            <div class="bar"><i id="qcBar"></i></div>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab on" data-tab="games">▶ 게임</button>
+          <button class="tab" data-tab="endless">∞ 무한 모드</button>
+          <button class="tab" data-tab="map">▶ Quick Check 지도</button>
+          <button class="na-btn info-btn" id="endlessInfo" hidden>ⓘ 무한 모드란?</button>
+          <span class="sp"></span>
+          <span class="note">기록은 이 브라우저에만 저장된다</span>
+          <button class="na-btn" id="reset" style="padding:6px 12px;font-size:12px">기록 초기화</button>
+        </div>
+        <div id="games" class="games"></div>
+        <div id="endless" class="games" hidden></div>
+        <div id="weeks" class="weeks" hidden></div>
+      </div>
+      <div class="na-overlay" id="overlay" hidden></div>
+    </div>
+  </div>
+</div>
+<script src="shared/qc-data.js"></script>
+<script src="shared/engine.js"></script>
+<script src="shared/ui.js"></script>
+<script>
+(function () {
+  var esc = NA.ui.esc;
+  NA.fitStage(document.getElementById('stage'));
+  function chips(ids) {
+    return ids.map(function (id) { return '<span class="qc-tag' + (NA.progress.isCleared(id) ? ' done' : '') + '">' + id + '</span>'; }).join('');
+  }
+  function gameFor(id) {
+    var r = NA.GAMES.filter(function (g) { return g.qc.indexOf(id) >= 0; });
+    r.sort(function (a, b) { return b.ready - a.ready; });
+    return r[0];
+  }
+  function draw() {
+    var done = NA.QC.filter(function (q) { return NA.progress.isCleared(q.id); }).length;
+    document.getElementById('qcCount').textContent = done + ' / ' + NA.QC.length;
+    document.getElementById('qcBar').style.width = (done / NA.QC.length * 100) + '%';
+    var gs = NA.GAMES.slice().sort(function (a, b) { return (b.ready - a.ready) || (a.week - b.week); });
+    function card(g, inEndless) {
+      return '<div class="gcard' + (g.ready ? ' ready' : '') + '">' +
+        '<div class="top"><span class="wk">' + (g.weekLabel || 'WEEK ' + g.week) + '</span><span class="genre">' + esc(g.genre) + '</span></div>' +
+        '<h3>' + esc(g.title) + (g.endless && !inEndless ? ' <span class="inf" title="무한 모드 있음">∞</span>' : '') + '</h3><p>' + esc(inEndless && g.endless ? g.endless : g.pitch) + '</p>' +
+        '<div class="foot"><div class="chips">' + chips(g.qc) + '</div>' +
+        (g.ready ? '<a class="na-btn primary" href="games/' + g.id + '/index.html' + (inEndless && g.endless ? '#endless' : '') + '">' + (inEndless && g.endless ? '∞ 무한 모드' : '플레이') + '</a>' : '<span class="soon">제작 예정</span>') + '</div></div>';
+    }
+    document.getElementById('games').innerHTML = gs.filter(function (g) { return g.mode !== 'endless'; }).map(function (g) { return card(g, false); }).join('');
+    document.getElementById('endless').innerHTML = gs.filter(function (g) { return g.mode === 'endless'; }).map(function (g) { return card(g, true); }).join('') +
+      gs.filter(function (g) { return g.endless && g.ready; }).map(function (g) { return card(g, true); }).join('');
+    var html = '';
+    [1, 2, 3, 4].forEach(function (w) {
+      var qs = NA.QC.filter(function (q) { return q.week === w; });
+      var d = qs.filter(function (q) { return NA.progress.isCleared(q.id); }).length;
+      html += '<div class="week"><h4>WEEK ' + w + ' <span>' + d + '/' + qs.length + '</span></h4>';
+      qs.forEach(function (q) {
+        var g = gameFor(q.id), ok = NA.progress.isCleared(q.id);
+        html += '<div class="qrow' + (ok ? ' done' : '') + '" title="' + esc(q.q) + '"><span class="st">' + (ok ? '■' : '□') + '</span><span class="tx">' + esc(q.q) + '</span>' +
+          (g.ready ? '<a href="games/' + g.id + '/index.html">' + esc(g.title) + ' →</a>' : '<span class="na">' + esc(g.title) + '</span>') + '</div>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('weeks').innerHTML = html;
+  }
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.onclick = function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('on', x === t); });
+      document.getElementById('games').hidden = t.dataset.tab !== 'games';
+      document.getElementById('endless').hidden = t.dataset.tab !== 'endless';
+      document.getElementById('weeks').hidden = t.dataset.tab !== 'map';
+      document.getElementById('endlessInfo').hidden = t.dataset.tab !== 'endless';
+      if (t.dataset.tab === 'endless' && !skipInfo()) endlessInfo();
+    };
+  });
+
+  /* 무한 모드 안내 팝업: 무한 모드 탭에 들어갈 때, 또는 ⓘ 버튼으로 */
+  var INFO_KEY = 'net-arcade-endless-info-hide';
+  function skipInfo() { try { return localStorage.getItem(INFO_KEY) === '1'; } catch (e) { return false; } }
+  function endlessInfo() {
+    var ov = document.getElementById('overlay');
+    var own = NA.GAMES.filter(function (g) { return g.mode === 'endless' && g.ready; }).map(function (g) { return '<b>' + esc(g.title) + '</b>'; }).join(', ');
+    var plus = NA.GAMES.filter(function (g) { return g.endless && g.ready; }).map(function (g) { return '<b>' + esc(g.title) + '</b>'; }).join(', ');
+    ov.innerHTML = '<div class="na-card"><h2>∞ 무한 모드란?</h2><p class="sub">외우지 말고 버티기. 실력이 늘었는지 확인하는 복습용 모드다.</p>' +
+      '<div class="howto">' +
+        '· 문제를 <b>매번 무작위로</b> 만든다. IP 주소, 포트, seq 번호, 네트워크 조건이 판마다 달라서 답을 외울 수 없다.<br>' +
+        '· 정해진 끝이 없다. <b>신뢰도(목숨)가 다 떨어질 때까지</b> 계속되고, 갈수록 조금씩 어려워진다.<br>' +
+        '· 끝나면 점수와 ★, 그리고 그 게임의 <b>Quick Check 복습 문제</b>가 나온다. 게임마다 <b>최고 점수</b>가 이 브라우저에 남는다.<br>' +
+        '· 언제든 <span class="key">Esc</span>로 멈출 수 있다.' +
+      '</div>' +
+      '<div class="howto">무한 모드 전용 게임: ' + own + '<br>기존 게임의 무한 모드: ' + plus + ' (게임 안의 스테이지 목록 끝에서도 들어갈 수 있다)</div>' +
+      '<label class="hide-opt"><input type="checkbox" data-hide' + (skipInfo() ? ' checked' : '') + '> 탭을 열 때 이 안내를 자동으로 띄우지 않기 (ⓘ 버튼으로는 언제든 볼 수 있다)</label>' +
+      '<div class="na-row"><button class="na-btn primary" data-close>확인 (Enter)</button></div></div>';
+    ov.hidden = false;
+    function close() { window.removeEventListener('keydown', kd); ov.hidden = true; }
+    function kd(e) { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); close(); } }
+    ov.querySelector('[data-close]').onclick = close;
+    ov.onclick = function (e) { if (e.target === ov) close(); };
+    ov.querySelector('[data-hide]').onchange = function (e) { try { localStorage.setItem(INFO_KEY, e.target.checked ? '1' : '0'); } catch (er) {} };
+    setTimeout(function () { window.addEventListener('keydown', kd); }, 100);
+  }
+  document.getElementById('endlessInfo').onclick = endlessInfo;
+  document.getElementById('reset').onclick = function () {
+    if (confirm('Quick Check 클리어 기록과 스테이지 기록을 모두 지울까?')) { NA.progress.reset(); draw(); }
+  };
+  window.addEventListener('pageshow', draw);
+  draw();
+})();
+</script>
+</body>
+</html>

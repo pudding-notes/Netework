@@ -1,0 +1,144 @@
+/* 네트워크 역전재판 — 법정 테마 */
+.fit-host { background: radial-gradient(ellipse at 50% 30%, #3a2a1a 0%, #1e150d 55%, #0d0906 100%); }
+.fit-stage { --wood: #8a5a32; --wood2: #5a3a1e; --gold: #f2c94c; --def: #3d8bff; --pros: #ff4d5e; --wit: #48d19b; --judge: #e0b04a; --mono: 'D2Coding', 'Consolas', 'Menlo', monospace; }
+
+.court { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 12px; height: 692px; }
+.lcol { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* 상단 HUD */
+.hud { height: 40px; display: flex; align-items: center; gap: 14px; background: rgba(13, 9, 6, .8); border: 2px solid var(--wood2); padding: 0 12px; }
+.hud .case { font-size: 15px; font-weight: 700; color: #ffe7b8; white-space: nowrap; }
+.hud .phase { font-size: 12px; padding: 3px 8px; border: 1px solid var(--gold); color: var(--gold); white-space: nowrap; }
+.hud .sp { flex: 1; }
+.trust { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #d9c3a0; white-space: nowrap; }
+.trust .g { display: flex; gap: 3px; }
+.trust .g i { width: 26px; height: 14px; background: #3fd07a; border: 1px solid #0d0906; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .25); transition: background .3s; }
+.trust .g i.off { background: #2a1d12; }
+.trust.hit { animation: thit .5s; }
+@keyframes thit { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+
+/* 장면 */
+.scene { position: relative; height: 440px; border: 3px solid var(--wood); overflow: hidden; background: #1b2238; }
+.scene.bg-judge { background: linear-gradient(180deg, #5a3a1e 0%, #3a2412 60%, #24160b 100%); }
+.scene.bg-pros { background: linear-gradient(110deg, #4a1218 0%, #2a0a0e 70%); }
+.scene.bg-def, .scene.bg-me, .scene.bg-aide { background: linear-gradient(250deg, #10284d 0%, #0a1830 70%); }
+.scene.bg-wit { background: linear-gradient(180deg, #1e3a30 0%, #0f2219 75%); }
+.scene.bg-sys { background: linear-gradient(180deg, #2a2016 0%, #120d08 100%); }
+.scene .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 70px; z-index: 0; background: repeating-linear-gradient(90deg, var(--wood2) 0 60px, #4a2f17 60px 120px); border-top: 4px solid var(--wood); }
+.scene .loc { position: absolute; left: 12px; top: 10px; font-size: 12px; color: rgba(255, 255, 255, .55); letter-spacing: 2px; }
+.portrait { position: absolute; z-index: 2; left: 50%; bottom: 16px; transform: translateX(-50%); text-align: center; }
+.portrait .face { width: 200px; height: 200px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 124px; background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .16), rgba(0, 0, 0, .2)); border: 4px solid rgba(255, 255, 255, .18); }
+.portrait .plate { margin-top: 8px; display: inline-block; padding: 5px 16px; background: #0d0906; border: 2px solid var(--gold); color: #ffe7b8; font-size: 15px; font-weight: 700; }
+.portrait.in { animation: pin .25s ease-out; }
+@keyframes pin { from { opacity: 0; transform: translateX(-50%) translateY(14px); } }
+.portrait.shake .face { animation: pshake .45s; }
+@keyframes pshake { 20%, 60% { transform: translateX(-14px) rotate(-4deg); } 40%, 80% { transform: translateX(14px) rotate(4deg); } }
+.portrait.break .face { animation: pbreak 1s; }
+@keyframes pbreak { 0% { transform: scale(1); } 15% { transform: scale(1.15) rotate(-8deg); filter: brightness(2); } 30% { transform: scale(.9) rotate(8deg); } 50% { transform: scale(1.08) rotate(-5deg); } 100% { transform: none; } }
+
+.desk { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 360px; height: 70px; background: linear-gradient(180deg, var(--wood) 0%, var(--wood2) 100%); border: 3px solid #2a1a0c; border-bottom: 0; }
+
+/* 증언 배너 */
+.tbanner { position: absolute; left: 0; right: 0; top: 30px; text-align: center; }
+.tbanner .h { display: inline-block; padding: 6px 22px; font-size: 18px; font-weight: 700; color: #ff8a3d; background: rgba(0, 0, 0, .55); border-top: 2px solid #ff8a3d; border-bottom: 2px solid #ff8a3d; letter-spacing: 1px; }
+.tbanner .h.cross { color: #ff4d5e; border-color: #ff4d5e; }
+.sdots { position: absolute; left: 0; right: 0; top: 76px; display: flex; justify-content: center; gap: 8px; }
+.sdots span { min-width: 34px; height: 24px; padding: 0 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid #6a7a70; color: #b8c8be; background: rgba(0, 0, 0, .45); }
+.sdots span.cur { border-color: #fff; color: #fff; box-shadow: 0 0 10px rgba(255, 255, 255, .5); }
+.sdots span.broken { border-color: var(--pros); color: var(--pros); text-decoration: line-through; }
+.sdots span.pressed::after { content: '·'; margin-left: 2px; color: var(--gold); }
+
+/* 외침 말풍선 */
+.shout { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 5; }
+.shout .b { padding: 34px 64px; font-size: 64px; font-weight: 700; color: #fff; letter-spacing: 4px;
+  clip-path: polygon(0 18%, 12% 22%, 8% 0, 26% 16%, 38% 2%, 46% 18%, 62% 0, 66% 18%, 86% 4%, 82% 24%, 100% 22%, 90% 42%, 100% 60%, 86% 64%, 96% 92%, 72% 78%, 64% 100%, 52% 80%, 34% 98%, 30% 80%, 10% 96%, 14% 72%, 0 74%, 8% 50%);
+  text-shadow: 4px 4px 0 #000, -2px -2px 0 #000; animation: shout .9s ease-out forwards; }
+.shout .b.obj { background: #e8202f; }
+.shout .b.hold { background: #2e74ff; }
+.shout .b.take { background: #ff8a00; }
+@keyframes shout { 0% { transform: scale(2.4) rotate(-6deg); opacity: 0; } 12% { transform: scale(1) rotate(-3deg); opacity: 1; } 75% { transform: scale(1.04) rotate(-3deg); opacity: 1; } 100% { transform: scale(1.1); opacity: 0; } }
+.scene.shake, .court.shake { animation: sshake .4s; }
+@keyframes sshake { 20% { transform: translate(-10px, 4px); } 40% { transform: translate(9px, -5px); } 60% { transform: translate(-6px, 3px); } 80% { transform: translate(4px, -2px); } }
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 4; }
+.flash.go { animation: flash .35s; }
+.flash.red { background: #ff2a3a; }
+@keyframes flash { 0% { opacity: .85; } 100% { opacity: 0; } }
+
+/* 판결 */
+.verdict { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 30px; z-index: 6; pointer-events: none; }
+.verdict span { font-size: 120px; font-weight: 700; color: #fff; text-shadow: 6px 6px 0 #000; opacity: 0; animation: vin .5s ease-out forwards; }
+.verdict.ok span { color: #fff; -webkit-text-stroke: 3px #e8202f; }
+.verdict.ng span { -webkit-text-stroke: 3px #3a5cff; }
+@keyframes vin { from { transform: scale(3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.confetti { position: absolute; top: -20px; width: 10px; height: 16px; z-index: 7; pointer-events: none; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(480px) rotate(720deg); } }
+
+/* 조사: 터미널 */
+.term { position: absolute; inset: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr); background: #070a12; }
+.cmds { border-right: 2px solid #1c2440; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.cmds h4 { margin: 0 0 2px; font-size: 12px; color: #8a93c2; font-weight: 400; display: flex; justify-content: space-between; }
+.cmds button { text-align: left; background: #111833; color: #e8ecff; border: 2px solid #26305a; padding: 6px 8px; font-size: 13px; cursor: pointer; display: flex; gap: 6px; align-items: center; }
+.cmds button .k { font-size: 11px; color: #8a93c2; width: 14px; }
+.cmds button.done { border-color: #2e6b4c; color: #9fe8bf; }
+.cmds button.done::after { content: '✓'; margin-left: auto; color: #5dffa0; }
+.cmds button.on { border-color: #4de2ff; }
+.cmds button:hover { border-color: #4de2ff; }
+.cmds .sp { flex: 1; }
+.cmds .go { text-align: center; justify-content: center; background: #3d1d0c; border-color: var(--gold); color: var(--gold); font-weight: 700; font-size: 14px; padding: 9px; }
+.cmds .go:disabled { opacity: .35; cursor: not-allowed; }
+.screen { padding: 12px 14px; font-family: var(--mono); font-size: 13px; line-height: 1.5; color: #c8f7d4; white-space: pre-wrap; word-break: break-all; overflow: hidden; }
+.screen .pr { color: #4de2ff; }
+.screen .muted { color: #5a6488; }
+.screen .cur { display: inline-block; width: 8px; height: 14px; background: #c8f7d4; vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* 지목 */
+.pick { position: absolute; inset: 0; padding: 22px 28px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg, rgba(20, 12, 6, .92), rgba(10, 6, 3, .96)); }
+.pick .q { font-size: 20px; font-weight: 700; color: #ffe7b8; margin-bottom: 6px; line-height: 1.4; }
+.pick .q small { display: block; font-size: 12px; color: #c7a97c; font-weight: 400; margin-bottom: 4px; letter-spacing: 1px; }
+.pick button { text-align: left; background: #1e150d; color: #f4e6cc; border: 2px solid var(--wood); padding: 11px 14px; font-size: 15px; cursor: pointer; line-height: 1.4; display: flex; gap: 10px; }
+.pick button .n { color: var(--gold); }
+.pick button:hover { border-color: var(--gold); background: #2a1d12; }
+.pick button.x { border-color: #5a2a2a; color: #9a7a7a; text-decoration: line-through; }
+
+/* 대화창 */
+.dbox { position: relative; flex: 1; min-height: 0; background: rgba(8, 12, 26, .94); border: 3px solid #c9d2ff; box-shadow: inset 0 0 0 3px #1a2350; padding: 18px 20px 12px; cursor: pointer; display: flex; flex-direction: column; }
+.dbox .who { position: absolute; left: 14px; top: -16px; padding: 3px 14px; background: #1a2350; border: 2px solid #c9d2ff; font-size: 14px; font-weight: 700; }
+.dbox .txt { font-size: 17px; line-height: 1.65; color: #f2f4ff; flex: 1; }
+.dbox .txt b { color: #ff9a4d; }
+.dbox .txt.testi { color: #6dffa8; }
+.dbox .txt.testi.broken { color: #8a7a7a; text-decoration: line-through; }
+.dbox .more { position: absolute; right: 16px; bottom: 10px; color: #c9d2ff; font-size: 14px; animation: more .8s infinite alternate; }
+@keyframes more { to { transform: translateY(4px); } }
+.dbox.locked { cursor: default; }
+.ctrl { display: flex; gap: 8px; align-items: center; }
+.ctrl button { font-family: var(--font); font-size: 14px; padding: 8px 14px; cursor: pointer; border: 2px solid #000; box-shadow: 3px 3px 0 #000; font-weight: 700; color: #fff; }
+.ctrl .nav { background: #2a3360; }
+.ctrl .press { background: #2e74ff; }
+.ctrl .obj { background: #e8202f; }
+.ctrl .sp { flex: 1; }
+.ctrl .info { font-size: 12px; color: #8a93c2; font-weight: 400; }
+.ctrl button:disabled { opacity: .35; cursor: not-allowed; }
+.ctrl button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+
+/* 법정 기록 */
+.record { display: flex; flex-direction: column; gap: 8px; background: rgba(30, 21, 13, .92); border: 3px solid var(--wood); padding: 10px; min-height: 0; }
+.record h3 { margin: 0; font-size: 14px; color: #ffe7b8; display: flex; justify-content: space-between; align-items: baseline; }
+.record h3 small { font-size: 11px; color: #c7a97c; font-weight: 400; }
+.evlist { display: flex; flex-direction: column; gap: 4px; }
+.ev { display: flex; align-items: center; gap: 8px; padding: 5px 8px; background: #140e08; border: 2px solid #3a2a1a; cursor: pointer; font-size: 13px; color: #f4e6cc; height: 32px; }
+.ev .ic { font-size: 16px; width: 20px; text-align: center; }
+.ev .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev.sel { border-color: var(--gold); background: #2a1d12; box-shadow: 0 0 8px rgba(242, 201, 76, .4); }
+.ev.new { animation: evnew 1.2s; }
+@keyframes evnew { 0% { background: #f2c94c; color: #000; } 100% { background: #140e08; } }
+.ev.empty { color: #6a5a48; border-style: dashed; cursor: default; justify-content: center; }
+.evdetail { flex: 1; min-height: 0; background: #0d0906; border: 2px solid #3a2a1a; padding: 8px 10px; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.evdetail .t { font-size: 14px; font-weight: 700; color: var(--gold); }
+.evdetail .s { font-size: 12px; color: #f4e6cc; line-height: 1.5; }
+.evdetail pre { margin: 0; font-family: var(--mono); font-size: 11.5px; line-height: 1.45; color: #c8f7d4; white-space: pre-wrap; word-break: break-all; }
+.evdetail .ph { color: #6a5a48; font-size: 12px; line-height: 1.6; }
+.present { background: #e8202f; color: #fff; border: 2px solid #000; box-shadow: 3px 3px 0 #000; font-family: var(--font); font-weight: 700; font-size: 15px; padding: 10px; cursor: pointer; }
+.present:disabled { background: #4a2a2a; color: #9a7a7a; cursor: not-allowed; }
+.present:not(:disabled) { animation: pglow 1.2s infinite alternate; }
+@keyframes pglow { to { box-shadow: 3px 3px 0 #000, 0 0 16px #ff4d5e; } }

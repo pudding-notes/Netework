@@ -1,0 +1,91 @@
+.fit-host { background: radial-gradient(ellipse at 50% 20%, #17204a 0%, #0c1230 70%); }
+
+.bar { display: flex; gap: 14px; align-items: center; height: 40px; margin-bottom: 10px; }
+.bar .st { font-size: 18px; font-weight: 700; }
+.bar .st small { color: var(--dim); font-weight: 400; font-size: 13px; margin-left: 6px; }
+.bar .cnt { color: var(--dim); font-size: 13px; }
+.bar .sp { flex: 1; }
+.bar .na-btn { padding: 6px 12px; font-size: 13px; }
+
+.layout { display: grid; grid-template-columns: 330px 548px minmax(0, 1fr); gap: 14px; height: 642px; }
+.col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.panel { background: var(--panel); border: 2px solid var(--line); box-shadow: 4px 4px 0 #000; padding: 10px 12px; overflow: hidden; }
+.panel h3 { margin: 0 0 8px; font-size: 12.5px; color: var(--dim); font-weight: 400; letter-spacing: 1px; display: flex; justify-content: space-between; }
+
+/* 요청서 */
+.req { background: #f2e3c2; color: #2b2112; border: 3px solid #c9a96b; padding: 8px 12px; box-shadow: 3px 3px 0 #000; }
+.req .who { font-size: 13px; color: #6a5530; }
+.req .need { font-size: 23px; font-weight: 700; margin: 1px 0; }
+.req .need small { font-size: 13px; font-weight: 400; }
+.req .note { font-size: 12px; color: #6a5530; }
+.reqlist { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.ritem { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; padding: 3px 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-family: var(--font); text-align: left; }
+.ritem.done { color: var(--ok); border-color: rgba(93, 255, 160, .4); }
+.ritem.cur { border-color: var(--ack); color: var(--ack); }
+.ritem.pick { cursor: pointer; }
+.ritem.pick:hover { border-color: var(--ack); }
+.ritem b { font-weight: 700; }
+
+/* 블록 트레이 */
+.tray { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tbtn { background: var(--bg); border: 2px solid var(--line); color: var(--ink); font-family: var(--font); padding: 4px 8px; cursor: pointer; text-align: left; position: relative; }
+.tbtn:hover:not(:disabled) { border-color: var(--data); }
+.tbtn.on { border-color: var(--ack); background: #2a2410; }
+.tbtn:disabled { opacity: .3; cursor: not-allowed; }
+.tbtn .p { font-size: 16px; font-weight: 700; color: var(--data); }
+.tbtn .k { position: absolute; right: 6px; top: 4px; font-size: 10px; color: var(--dim); }
+.tbtn .s { display: block; font-size: 10.5px; color: var(--dim); white-space: nowrap; }
+.tbtn .s b { color: var(--ink); }
+.tbtn.pulse { animation: pulse 1.1s infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 201, 77, .7); } 50% { box-shadow: 0 0 0 7px rgba(255, 201, 77, 0); } }
+
+/* 보드 */
+.boardwrap { padding: 10px 12px; }
+.board { display: grid; grid-template-columns: 74px repeat(16, 27px); grid-auto-rows: 27px; gap: 1px; position: relative; }
+.rl { font-size: 10.5px; color: var(--dim); display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; white-space: nowrap; }
+.cell { background: #0d1430; border: 1px solid #1d2756; cursor: pointer; position: relative; }
+.cell.q4 { border-left-color: #2e3b7a; }
+.cell.ok { background: rgba(93, 255, 160, .35); border-color: var(--ok); }
+.cell.bad { background: rgba(255, 84, 112, .35); border-color: var(--bad); }
+.cell.start::after { content: ''; position: absolute; inset: 7px; border: 2px dotted rgba(255, 201, 77, .75); border-radius: 50%; }
+.cell.pre { background: #2a2f45; cursor: not-allowed; }
+.blk { position: absolute; border: 2px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; pointer-events: none; overflow: hidden; text-align: center; line-height: 1.3; }
+.blk b { font-size: 12px; }
+.blk.pre { background: rgba(70, 78, 110, .85); border-color: #6b7499; color: #c7cce6; }
+.colnums { display: grid; grid-template-columns: 74px repeat(16, 27px); gap: 1px; margin-bottom: 2px; }
+.colnums span { font-size: 9px; color: #4b5486; text-align: center; }
+.boardfoot { font-size: 12px; color: var(--dim); margin-top: 8px; line-height: 1.6; min-height: 38px; }
+.boardfoot b { color: var(--ack); }
+
+/* 오른쪽 */
+.coach { background: #1d2650; border: 2px solid var(--vio); padding: 10px 12px; font-size: 12.5px; line-height: 1.7; }
+.coach .who { color: var(--vio); font-weight: 700; display: block; margin-bottom: 3px; }
+.coach b, .feedback b, .quiz b { color: var(--ack); }
+.feedback { border: 2px solid var(--line); background: var(--panel); padding: 10px 12px; font-size: 12.5px; line-height: 1.7; }
+.feedback.ok { border-color: var(--ok); } .feedback.no { border-color: var(--bad); } .feedback.info { border-color: var(--data); }
+.feedback h4 { margin: 0 0 4px; font-size: 14px; }
+.feedback.ok h4 { color: var(--ok); } .feedback.no h4 { color: var(--bad); } .feedback.info h4 { color: var(--data); }
+.quiz { border: 2px solid var(--ack); background: #1b1405; padding: 10px 12px; }
+.quiz .q { font-size: 14px; font-weight: 700; margin-bottom: 8px; line-height: 1.5; }
+.qopts { display: flex; flex-direction: column; gap: 6px; }
+.qopt { background: #2a1f08; border: 2px solid #6b5420; color: #f3dca0; font-family: var(--font); font-size: 15px; font-weight: 700; padding: 7px 10px; cursor: pointer; text-align: left; }
+.qopt:hover:not(:disabled) { border-color: var(--ack); }
+.qopt.right { border-color: var(--ok); color: var(--ok); }
+.qopt.wrong { border-color: var(--bad); color: var(--bad); }
+.qopt:disabled { cursor: default; }
+.blockinfo { font-size: 12px; line-height: 1.8; }
+.blockinfo b { color: var(--ack); }
+.stats { font-size: 12px; color: var(--dim); line-height: 1.8; }
+.stats b { color: var(--ink); }
+
+.guide h4 { color: var(--ack); margin: 14px 0 6px; font-size: 14px; }
+.guide p, .guide li { font-size: 13px; line-height: 1.75; }
+.guide table { border-collapse: collapse; font-size: 12.5px; }
+.guide td, .guide th { border: 1px solid var(--line); padding: 3px 10px; }
+
+/* 블록 크기 목록: 한 줄에 하나씩 (좁은 2열에서 글자가 잘리던 문제 수정) */
+.tray { grid-template-columns: 1fr; gap: 4px; }
+.tbtn { display: flex; align-items: center; gap: 10px; padding: 4px 10px; }
+.tbtn .k { position: static; order: 0; width: 14px; font-size: 11px; }
+.tbtn .p { order: 1; width: 44px; }
+.tbtn .s { order: 2; display: block; font-size: 12px; white-space: nowrap; overflow: visible; }
