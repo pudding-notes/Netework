@@ -3528,7 +3528,7 @@ function setup(){S.screen='setup';const ex=S.mode==='exam',n={r100:Math.min(100,
   q$('qzBody').innerHTML='<div class="qzH">OX 퀴즈 <small>전체 '+QZ.length+'문제</small></div>'+
   '<div class="qzL">풀 방식</div><div class="qzChips">'+[['r100','100문제 풀기'],['qc','퀵체크만'],['wrong','오답노트만'],['exam','시험']].map(([k,t])=>'<button class="qzC'+(k==='exam'?' ex':'')+(S.mode===k?' on':'')+'" data-m="'+k+'">'+t+' <small>'+n[k]+'</small></button>').join('')+'</div>'+
   (ex?'':'<div class="qzL">단원</div><div class="qzChips">'+[1,2,3,4].map(u=>'<button class="qzC'+(S.units.has(u)?' on':'')+'" data-u="'+u+'">'+u+' '+UN[u]+' <small>'+QZ.filter(q=>q[0]===u).length+'</small></button>').join('')+'</div>')+
-  '<p class="qzNote">'+(ex?'<b>시험 모드</b> · 퀵체크 40문제 전부와 핵심 오개념을 묻는 60문제, 모두 100문제를 섞어서 풀어요. 단원 선택과 관계없이 같은 문제예요.<br>⏱ 시간을 재고, 맵에서 보기는 시험이 끝난 뒤 오답노트에서 쓸 수 있어요.':S.mode==='r100'?'고른 단원에서 무작위로 '+n.r100+'문제를 뽑아요.':S.mode==='qc'?'각 단원의 Quick Check 문항만 풀어요.':'틀렸던 문제만 다시 풀어요. 맞히면 오답노트에서 빠져요.')+'</p>'+
+  '<p class="qzNote">'+(ex?'<b>시험 모드</b> · 퀵체크 40문제 전부와 핵심 오개념을 묻는 60문제, 모두 100문제를 섞어서 풀어요. 단원 선택과 관계없이 같은 문제예요.<br>⏱ 시간을 재고, 맵에서 보기는 시험을 마친 뒤 결과 화면과 오답노트에서 쓸 수 있어요.':S.mode==='r100'?'고른 단원에서 무작위로 '+n.r100+'문제를 뽑아요.':S.mode==='qc'?'각 단원의 Quick Check 문항만 풀어요.':'틀렸던 문제만 다시 풀어요. 맞히면 오답노트에서 빠져요.')+'</p>'+
   '<div class="qzRow"><button class="btn pri" id="qzGo"'+(n[S.mode]?'':' disabled')+'>시작하기 ▶</button><button class="btn" id="qzNb">오답노트 보기 ('+wrong.size+')</button></div>';
   q$('qzBody').querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const u=+b.dataset.u;if(S.units.has(u)){if(S.units.size>1)S.units.delete(u);}else S.units.add(u);setup();});
   q$('qzBody').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mode=b.dataset.m;setup();});
@@ -3571,7 +3571,7 @@ function result(){S.screen='result';tStop();const tm=T.acc,n=S.ans.filter(x=>x!=
   (S.exam?'<div class="qzTime"><span>⏱ 걸린 시간 <b>'+fmt(tm)+'</b></span><span>문제당 평균 <b>'+(n?(tm/n/1000).toFixed(1):'0')+'초</b></span></div>'+
    '<div class="qzUnits">'+[1,2,3,4].map(u=>{const ids=S.list.filter((id,k)=>QZ[id][0]===u&&S.ans[k]!=null),ok=S.list.filter((id,k)=>QZ[id][0]===u&&S.ans[k]===QZ[id][2]).length;
      return ids.length?'<div><span>'+u+' '+UN[u]+'</span><i><b style="width:'+(ok/ids.length*100)+'%"></b></i><em>'+ok+' / '+ids.length+'</em></div>':'';}).join('')+'</div>':'')+
-  (S.bad.length?'<div class="qzL">이번에 틀린 문제 '+S.bad.length+'개</div><div class="qzList">'+S.bad.map(i=>item(i,false,S.exam)).join('')+'</div>':'<p class="qzNote">이번에 푼 문제는 모두 맞혔어요.</p>')+
+  (S.bad.length?'<div class="qzL">이번에 틀린 문제 '+S.bad.length+'개</div><div class="qzList">'+S.bad.map(i=>item(i,false)).join('')+'</div>':'<p class="qzNote">이번에 푼 문제는 모두 맞혔어요.</p>')+
   '<div class="qzRow">'+(S.bad.length?'<button class="btn pri" id="qzRe">틀린 문제 다시 풀기</button>':'')+'<button class="btn" id="qzHome">처음으로</button></div>';
   if(S.bad.length)q$('qzRe').onclick=()=>{S.mode='wrong';start(shuf(S.bad.slice()));};
   q$('qzHome').onclick=setup;bindItems();}
