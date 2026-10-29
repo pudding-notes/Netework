@@ -37,9 +37,10 @@ function mountBank(host) {
 
 /* ---------- OX random mock quiz ---------- */
 function mountOX(host) {
-  const weeks = ['w1', 'w2', 'w3', 'w4'];
-  const ALL = []; weeks.forEach(w => OXBANK[w].forEach((r, k) => ALL.push({ id: w + ':' + k, w, q: r[0], a: r[1], why: r[2], ref: r[3] })));
-  let sel = LS.get('ox.weeks', weeks.slice()), cnt = LS.get('ox.cnt', 50), round = [], i = 0, onlyWrong = false;
+  const weeks = ['w1', 'w2', 'w3', 'w4', 'w5', 'quiz'].filter(w => OXBANK[w]);
+  const gl = w => w === 'quiz' ? '퀴즈 기출' : w.slice(1) + '주';
+  const ALL = []; weeks.forEach(w => OXBANK[w].forEach((r, k) => ALL.push({ id: w + ':' + k, w, no: k + 1, q: r[0], a: r[1], why: r[2], ref: r[3] })));
+  let sel = LS.get('ox.groups', weeks.slice()).filter(w => weeks.includes(w)), cnt = LS.get('ox.cnt', 50), round = [], i = 0, onlyWrong = false;
   if (![50, 100, 'all'].includes(cnt)) cnt = 50;
   const box = document.createElement('div'); host.appendChild(box);
   const wrongSet = () => new Set(LS.get('ox.wrong', []));
@@ -60,7 +61,7 @@ function mountOX(host) {
   function draw() {
     const done = round.filter(q => q.pick), right = done.filter(q => q.pick === q.a).length, W = wrongSet();
     let h = `<div class="lab oxq"><div class="lab-head"><span class="tag">OX 모의 퀴즈</span>문제은행 ${ALL.length}문항 · 매 라운드 무작위 · 틀린 문제는 다음 라운드에 먼저</div>
-<div class="lab-ctl">${weeks.map(w => `<div class="ctl tog"><input type="checkbox" id="ox-${w}" value="${w}" ${sel.includes(w) ? 'checked' : ''}><label for="ox-${w}">${w.slice(1)}주 (${OXBANK[w].length})</label></div>`).join('')}
+<div class="lab-ctl">${weeks.map(w => `<div class="ctl tog"><input type="checkbox" id="ox-${w}" value="${w}" ${sel.includes(w) ? 'checked' : ''}><label for="ox-${w}">${gl(w)} (${OXBANK[w].length})</label></div>`).join('')}
 <div class="ctl"><label for="ox-cnt">문항 수</label><select id="ox-cnt">${[['50', '50'], ['100', '100'], ['all', '범위 전체']].map(([v, l]) => `<option value="${v}" ${String(cnt) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
 <button class="btn pri" data-new>새 라운드</button><button class="btn" data-wrong ${W.size ? '' : 'disabled'}>내 오답만 (${W.size})</button></div><div class="lab-out">`;
     if (!round.length) h += `<p>${onlyWrong ? '선택한 범위에 저장된 오답이 없다.' : '선택한 범위에 문제가 없다.'}</p>`;
@@ -68,21 +69,21 @@ function mountOX(host) {
       const q = round[i];
       h += `<div class="oxbar"><div class="oxprog"><i style="width:${done.length / round.length * 100}%"></i></div><span class="mono">${i + 1} / ${round.length} · 정답 ${right}</span></div>
 <div class="oxdots">${round.map((r, k) => `<button data-go="${k}" class="${k === i ? 'cur' : r.pick ? (r.pick === r.a ? 'ok' : 'no') : ''}" aria-label="${k + 1}번">${k + 1}</button>`).join('')}</div>
-<div class="oxcard"><div class="oxmeta">${q.w.slice(1)}주차${W.has(q.id) && !q.pick ? ' · <b>지난번 오답</b>' : ''}</div><div class="oxq-t">${q.q}</div>
+<div class="oxcard"><div class="oxmeta">${q.w === 'quiz' ? `<b style="color:var(--l7)">퀴즈 기출 #${q.no}</b>` : q.w.slice(1) + '주차'}${W.has(q.id) && !q.pick ? ' · <b>지난번 오답</b>' : ''}</div><div class="oxq-t">${q.q}</div>
 <div class="oxbtn"><button data-ox="O" class="o ${q.pick ? (q.a === 'O' ? 'right' : q.pick === 'O' ? 'wrong' : 'dim') : ''}" ${q.pick ? 'disabled' : ''}>O</button><button data-ox="X" class="x ${q.pick ? (q.a === 'X' ? 'right' : q.pick === 'X' ? 'wrong' : 'dim') : ''}" ${q.pick ? 'disabled' : ''}>X</button></div>`;
       if (q.pick) h += `<div class="model"><div class="mh">${q.pick === q.a ? '⭕ 정답' : '❌ 오답'} — 정답은 ${q.a}</div>${q.why}<div style="margin-top:6px">${H.ref(q.ref, '관련 설명으로 이동')}</div></div><div style="margin-top:12px;display:flex;gap:8px"><button class="btn pri" data-go="${i + 1}">${i + 1 < round.length ? '다음 문제 ▶' : '결과 보기 ▶'}</button></div>`;
       else h += `<p class="cm" style="font-size:13px;margin:10px 0 0">키보드: O / X 로 답하고 Enter 또는 → 로 다음 문제</p>`;
       h += `</div>`;
     } else {
       const wr = round.filter(q => q.pick && q.pick !== q.a);
-      const byW = weeks.filter(w => round.some(q => q.w === w)).map(w => { const r = round.filter(q => q.w === w); return `${w.slice(1)}주 ${r.filter(q => q.pick === q.a).length}/${r.length}`; }).join(' · ');
+      const byW = weeks.filter(w => round.some(q => q.w === w)).map(w => { const r = round.filter(q => q.w === w); return `${gl(w)} ${r.filter(q => q.pick === q.a).length}/${r.length}`; }).join(' · ');
       h += `<div class="big" style="margin-bottom:4px">${right} / ${round.length}</div><p class="mono cm" style="margin:0 0 10px">${byW}${done.length < round.length ? ` · 안 푼 문제 ${round.length - done.length}` : ''}</p>`;
       if (wr.length) h += `<p><b>틀린 문제 ${wr.length}개</b> — 해설과 함께 다시 보기</p><div class="oxrev">${wr.map(q => `<div><div class="oxq-t" style="font-size:15.5px">${q.q} <b class="mono">→ ${q.a}</b></div><div class="cm" style="font-size:14px">${q.why} ${H.ref(q.ref, '복습')}</div></div>`).join('')}</div>`;
       else if (done.length) h += '<p>전부 맞혔다. 범위를 넓히거나 새 라운드로 다른 문제를 풀어 보자.</p>';
       h += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" data-new>새 라운드</button>${wr.length ? `<button class="btn" data-retry>방금 틀린 ${wr.length}문제 다시</button>` : ''}</div>`;
     }
     box.innerHTML = h + '</div></div>';
-    const readSel = () => { sel = weeks.filter(w => box.querySelector('#ox-' + w).checked); if (!sel.length) sel = weeks.slice(); LS.set('ox.weeks', sel); cnt = box.querySelector('#ox-cnt').value; if (cnt !== 'all') cnt = +cnt; LS.set('ox.cnt', cnt); };
+    const readSel = () => { sel = weeks.filter(w => box.querySelector('#ox-' + w).checked); if (!sel.length) sel = weeks.slice(); LS.set('ox.groups', sel); cnt = box.querySelector('#ox-cnt').value; if (cnt !== 'all') cnt = +cnt; LS.set('ox.cnt', cnt); };
     box.querySelectorAll('[data-new]').forEach(b => b.onclick = () => { readSel(); newRound(false); });
     const wb = box.querySelector('[data-wrong]'); if (wb) wb.onclick = () => { readSel(); newRound(true); };
     const rb = box.querySelector('[data-retry]'); if (rb) rb.onclick = () => { const ids = new Set(round.filter(q => q.pick && q.pick !== q.a).map(q => q.id)); round = rngFrom(Date.now() >>> 0).shuffle(round.filter(q => ids.has(q.id))).map(q => ({ ...q, pick: null })); i = 0; draw(); };
@@ -128,16 +129,16 @@ const NOTES = [
   ['옛 SYN에 대해 Client가 “무시”', '실제 TCP는 보통 <b>RST</b>로 거절한다. 어느 쪽이든 핵심은 같다 — Client의 세 번째 ACK가 없으면 연결이 성립하지 않아 Server 자원이 낭비되지 않는다.', 'w3.hs'],
 ];
 
-addWeek({ id: 'ex', num: 'E', short: '시험 대비', title: '퀴즈 10/19 · 중간고사 11/3', range: '1~4주차',
+addWeek({ id: 'ex', num: 'E', short: '시험 대비', title: '퀴즈 10/19 · 중간고사 11/3', range: '1~5주차',
   lead: '필기 기준 “원론적·이론적 내용 위주, 각 챕터 마지막 Quick Check 중요”. 주차별 핵심 → 랜덤 모의 퀴즈 → 헷갈리는 짝 → 필기와 대조할 점 순서로 정리한다.',
   sections: [
 { id: 'ex.guide', title: '주차별 핵심 (Takeaways)', slides: 'W1 S30 · W2 S42 · W3 S42 · W4 S44',
   blocks: [
-    `<ol><li><b>Quick Check 32문항</b>(1.10 · 2.18 · 3.23 · 4.22)을 먼저 내 말로 답하고, 모범 답안의 핵심 요소 체크로 빠진 것을 확인한다.</li><li><b>랜덤 OX 모의 퀴즈</b>(E.2, 200문항)로 섞어서 확인한다. 틀린 문제는 다음 라운드에 먼저 나오고, “관련 설명으로 이동”이 해당 섹션으로 데려간다. 객관식(E.3)은 보조 연습.</li><li><b>헷갈리는 짝</b>(E.4)과 <b>필기와 대조할 점</b>(E.5)을 훑는다.</li><li>계산형(서브넷 · Seq/ACK · cwnd · 연결 비용)은 각 주차 끝 ✎ 연습에서 🎲로 반복한다.</li></ol>`,
-    H.note('이 노트의 범위는 업로드된 1~4주차 자료다. 5주차 이후가 중간고사 범위에 들어가는지는 공지를 확인하자.'),
+    `<ol><li><b>Quick Check 32문항</b>(1.10 · 2.18 · 3.23 · 4.22)을 먼저 내 말로 답하고, 모범 답안의 핵심 요소 체크로 빠진 것을 확인한다.</li><li><b>랜덤 OX 모의 퀴즈</b>(E.2, 1~5주차 + 퀴즈 기출 100)로 섞어서 확인한다. 틀린 문제는 다음 라운드에 먼저 나오고, “관련 설명으로 이동”이 해당 섹션으로 데려간다. 객관식(E.3)은 보조 연습.</li><li><b>헷갈리는 짝</b>(E.4)과 <b>필기와 대조할 점</b>(E.5)을 훑는다.</li><li>계산형(서브넷 · Seq/ACK · cwnd · 연결 비용)은 각 주차 끝 ✎ 연습에서 🎲로 반복한다.</li></ol>`,
+    H.note('OX 문제은행은 1~5주차와 10/19 퀴즈 기출 100문항까지, 객관식과 헷갈리는 짝은 1~4주차 범위다. 중간고사 유형(OX · 약어 원래 이름 · 서술형) 연습과 모의시험은 <b>중간고사</b> 탭에 있다.'),
     H.cards([['1주 · 큰 그림', 'Internet = Network of Networks · Client/Server는 역할 · Cloud/Edge는 처리 위치 · Latency ≠ Bandwidth, Throughput은 병목 · 문제는 “어느 계층인가”', ''], ['2주 · 주소 → 경로 → 변환 → 서비스', 'IP AND Mask로 판단 · next hop만 결정(LPM) · MAC은 hop마다, IP는 유지 · 나가야 돌아온다(NAT) · 0.0.0.0 ≠ 공개', 'L3'], ['3주 · 연결은 상태다', '포트 = 프로세스 주소, 연결 = 4-tuple · 신뢰성 = 번호 + 확인 + 재전송 · rwnd(수신자) vs cwnd(네트워크) · UDP는 생략 · listen vs 연결 소켓, 열었으면 닫자', 'L4'], ['4주 · DNS · HTTP · HTTPS', 'URL 분해(host만 DNS) · DNS = 위임 + 캐시(TTL) · 시작줄+헤더+빈 줄+본문 · 멱등성이 재시도를 결정 · 상태 코드 = 누가 답했나 · 버전은 싣는 방법 · HTTPS는 무엇을 숨기고 어디는 못 숨김', 'L7']]),
   ] },
-{ id: 'ex.ox', title: '랜덤 OX 모의 퀴즈', slides: 'OX 문제은행 200문항', tag: '점검', blocks: [`<p>1~4주차 각 50문항, 총 200문항의 OX 문제은행에서 무작위로 뽑는다. 답하면 바로 해설이 나오고, 틀린 문제는 이 브라우저에 저장되어 다음 라운드에 먼저 나온다. “내 오답만”으로 틀린 것만 모아 풀 수 있다.</p>`, { mount: mountOX }] },
+{ id: 'ex.ox', title: '랜덤 OX 모의 퀴즈', slides: 'OX 문제은행 · 퀴즈 기출', tag: '점검', blocks: [`<p>1~4주차 각 50문항 · 5주차 44문항(아래 범위 체크) · <b>10/19 퀴즈 기출 100문항</b>의 OX 문제은행에서 무작위로 뽑는다. 기출만 풀려면 “퀴즈 기출”만 체크한다. 답하면 바로 해설이 나오고, 틀린 문제는 이 브라우저에 저장되어 다음 라운드에 먼저 나온다. “내 오답만”으로 틀린 것만 모아 풀 수 있다.</p>`, { mount: mountOX }] },
 { id: 'ex.bank', title: '객관식 연습', slides: '객관식 62문항', tag: '연습', blocks: [{ mount: mountBank }] },
 { id: 'ex.pairs', title: '헷갈리는 짝 비교', slides: '1~4주차',
   blocks: PAIRS.map(([a, ad, b, bd, ref]) => `<div class="pair"><div><h4>${a}</h4><p>${ad}</p></div><div><h4>${b}</h4><p>${bd}</p></div></div><div style="margin:-2px 0 16px">${H.ref(ref)}</div>`) },

@@ -227,7 +227,7 @@ function mountTrace(host, spec) {
         h += `<div class="lyr ${l.L}${added}"><div class="ln">${esc(l.n)}<small>${LNAME[l.L] || ''}</small></div><div class="fs">${fs}</div></div>`;
       });
       h += '</div>';
-    } else h += `<div class="tr-det"><h5>패킷 없음</h5><p class="cm" style="margin:0;font-size:14px">${e.from ? esc(laneName(e.from)) + ' 안에서 일어나는 처리라 오가는 패킷이 없다.' : '오가는 패킷이 없는 단계.'}</p></div>`;
+    } else h += `<div class="tr-det"><h5>패킷 없음</h5><p class="cm" style="margin:0;font-size:14px">${e.from && e.to && e.from !== e.to ? esc(laneName(e.from)) + ' → ' + esc(laneName(e.to)) + ' 사이의 내부 처리(함수 호출·SQL 등)라 패킷 상세를 표시하지 않는다.' : e.from ? esc(laneName(e.from)) + ' 안에서 일어나는 처리라 오가는 패킷이 없다.' : '오가는 패킷이 없는 단계.'}</p></div>`;
     if (spec.tables && spec.tables.length) {
       h += '<div class="tr-tables">';
       spec.tables.forEach(t => {
@@ -372,7 +372,8 @@ function mountTrace(host, spec) {
     chip.innerHTML = (e.pkt && e.pkt.length ? `<div class="ch" style="background:${col}">${esc(e.label || '')}</div>` + chipHTML(i, false) : `<div class="ch solo" style="background:${col}">${esc(e.label || '패킷')}</div>`);
     chip.style.borderColor = col;
     wrap.appendChild(chip);
-    const tr = p => `translate(${p.x}px, ${p.y}px) translate(-50%, -50%)`;
+    const cw2 = chip.offsetWidth / 2 + 4, ch2 = chip.offsetHeight / 2 + 2;
+    const tr = p => `translate(${Math.max(cw2, Math.min(W - cw2, p.x))}px, ${Math.max(ch2, Math.min(Hh - ch2, p.y))}px) translate(-50%, -50%)`;
     const kf = []; let t = 0;
     segs.forEach((s, k) => {
       s.ln.style.strokeDasharray = `${s.len} ${s.len}`;
@@ -432,9 +433,13 @@ function mountTrace(host, spec) {
     const sc = W > viewW + 1 && viewW / W >= 0.6 ? viewW / W : 1;
     const rowH = spec.rowH || 58, top = 76;
     const rowOf = []; let r = 0; ev.forEach(e => { if (e.row != null) r = e.row; rowOf.push(r); r += (e.tall || 1); });
-    const Hh = top + (Math.max(r, 1)) * rowH + 18;
+    /* show rows up to the current step (+1 ghost row) — no big empty area below a long sequence */
+    const curRow = i >= 0 && i < N ? rowOf[i] + (ev[i].tall || 1) : 0;
+    const visRows = Math.min(Math.max(r, 1), Math.max(curRow + 1, Math.min(4, r)));
+    const Hh = top + visRows * rowH + 18;
     view.innerHTML = '';
     const svg = svgEl('svg', { width: Math.floor(W * sc), height: Math.ceil(Hh * sc), viewBox: `0 0 ${W} ${Hh}`, class: 'ladder' }, view);
+    { const vh = Math.ceil(Hh * sc) + 16; if (!anim) view.style.transition = 'none'; view.style.height = vh + 'px'; if (!anim) { view.offsetHeight; view.style.transition = ''; } }
     svg.style.display = 'block'; svg.style.margin = '0 auto';
     const X = {}; lanes.forEach((l, j) => X[l.id] = n === 1 ? W / 2 : side + j * (W - 2 * side) / (n - 1));
     lanes.forEach(l => {
@@ -483,7 +488,7 @@ function mountTrace(host, spec) {
       });
       if (A) { late.forEach(x => x.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: Math.max(0, travel - 120), fill: 'both' })); D = travel; }
     }
-    for (let k = Math.max(0, i + 1); k < N; k++) { const e = ev[k]; if (!(e.from && e.to && e.from !== e.to)) continue; const y = top + rowOf[k] * rowH + 12; const g = svgEl('line', { x1: X[e.from], y1: y, x2: X[e.to], y2: y + slope }, svg); g.style.stroke = 'var(--line)'; g.style.strokeWidth = 1.5; g.style.strokeDasharray = '2 6'; }
+    for (let k = Math.max(0, i + 1); k < N; k++) { const e = ev[k]; if (!(e.from && e.to && e.from !== e.to) || rowOf[k] >= visRows) continue; const y = top + rowOf[k] * rowH + 12; const g = svgEl('line', { x1: X[e.from], y1: y, x2: X[e.to], y2: y + slope }, svg); g.style.stroke = 'var(--line)'; g.style.strokeWidth = 1.5; g.style.strokeDasharray = '2 6'; }
     if (spec.span) spec.span.forEach(s => { if (i < s.until) return; const y1 = top + rowOf[s.a] * rowH + 12, y2 = top + rowOf[s.b] * rowH + 12 + slope; const x = s.x ?? 24; const l = svgEl('line', { x1: x, y1, x2: x, y2 }, svg); l.style.stroke = 'var(--ink)'; l.style.strokeWidth = 2; arrowHead(svg, x, y1, -Math.PI / 2, 'var(--ink)', 8); arrowHead(svg, x, y2, Math.PI / 2, 'var(--ink)', 8); svgText(svg, x + 8, (y1 + y2) / 2, s.text, { anchor: 'start', weight: 700, size: 13, halo: true }); });
     return D;
   }

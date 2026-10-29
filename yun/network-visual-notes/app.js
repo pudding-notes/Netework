@@ -42,7 +42,7 @@
     main.querySelectorAll('section.sec').forEach(s => obs.observe(s));
   }
   function mountBlock(sec, b) {
-    if (typeof b === 'string') { const d = document.createElement('div'); d.className = 'prose'; d.innerHTML = b; sec.appendChild(d); return; }
+    if (typeof b === 'string') { const d = document.createElement('div'); d.className = /^<div class="tw">/.test(b) ? 'prose wide' : 'prose'; d.innerHTML = b; sec.appendChild(d); return; }
     if (b.h3) { const h = document.createElement('h3'); h.className = 'sub'; h.innerHTML = b.h3; sec.appendChild(h); return; }
     if (b.trace) { mountTrace(sec, typeof b.trace === 'function' ? b.trace() : b.trace); return; }
     if (b.lab) { mountLab(sec, b.lab); return; }
