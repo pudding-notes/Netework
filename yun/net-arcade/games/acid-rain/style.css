@@ -95,3 +95,8 @@
 .rnotes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .rnotes .note { margin: 0; }
 .rnotes .empty { grid-column: 1 / -1; }
+
+/* 모드가 7개라 메뉴를 4열로 */
+.na-card.ar-menu { max-width: 1060px; }
+.ar-menu .stage-list { grid-template-columns: repeat(4, 1fr); }
+.ar-menu .stage-btn { padding: 10px 12px; }

@@ -182,15 +182,47 @@
       return { q: 'TTL ' + t + '초 캐시, ' + e2 + '초 뒤 같은 이름 조회 → 다시 물어봐야? (o/x)', a: ox(re), show: re ? '다시 묻는다 (o)' : '캐시 사용 (x)', why: re ? 'TTL이 지났으니 캐시를 버리고 다시 묻는다.' : '아직 TTL 안이라 캐시된 답을 쓴다(그래서 이사한 IP가 늦게 반영되기도).' };
     } }
   ];
-  var WKC = { 1: '#b18cff', 2: '#4de2ff', 3: '#ffc94d', 4: '#5dffa0' };
+  var WKC = { 1: '#b18cff', 2: '#4de2ff', 3: '#ffc94d', 4: '#5dffa0', ab: '#ff9f6b' };
 
   var MODES = [
     { title: '전체 혼합', desc: '1~4주차 문제가 모두 섞여 내린다.', wk: [1, 2, 3, 4] },
     { title: '1주차 집중', desc: '역할 · Edge/Cloud · RTT · 대역폭 계산', wk: [1] },
     { title: '2주차 집중', desc: '서브넷 · 마스크 · 사설 IP · TTL · ARP/NAT', wk: [2] },
     { title: '3주차 집중', desc: '플래그 · 포트 · 소켓 · 상태 · seq/ack · cwnd', wk: [3] },
-    { title: '4주차 집중', desc: '상태 코드 · 메서드 · DNS · URL · TLS', wk: [4] }
+    { title: '4주차 집중', desc: '상태 코드 · 메서드 · DNS · URL · TLS', wk: [4] },
+    { title: '약어 → 풀네임', desc: 'CORS를 보고 Cross-Origin Resource Sharing을 친다. 1~5주차 약어 ' + (window.NA_ABBR || []).length + '개', abbr: 'full' },
+    { title: '풀네임 → 약어', desc: '긴 이름을 보고 약어를 친다. 약어 모드 몸풀기용', abbr: 'short' }
   ];
+
+  /* ------------------------------------------------------------ 약어 모드 */
+  // 비교용 정규화: 괄호 속 설명 · 기호 · 공백 · 대소문자 · 끝의 s를 무시한다 (시각노트 약어 드릴과 같은 기준)
+  function abNorm(s) { return String(s).toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/[^a-z0-9]/g, '').replace(/s$/, ''); }
+  var ABBR = (window.NA_ABBR || []).map(function (r) { return { k: r[0], forms: r[1], ko: r[2], len: r[1][0].replace(/\s*\([^)]*\)/g, '').length }; });
+  var ABKEY = {}; ABBR.forEach(function (r) { ABKEY[r.k] = r; });
+  // 풀네임 안의 약어를 풀어서 쓴 것도 정답으로 받는다: Smoothed RTT → Smoothed Round-Trip Time, DNS over HTTPS → …
+  ABBR.forEach(function (r) {
+    var extra = [];
+    r.forms.forEach(function (f) {
+      var all = f, hit = false;
+      f.split(/[\s·,\/:+→()]+/).forEach(function (t) {
+        var e = ABKEY[t];
+        if (e && e !== r && t.length >= 2) { extra.push(f.replace(t, e.forms[0])); all = all.replace(t, e.forms[0]); hit = true; }
+      });
+      if (hit) extra.push(all);
+    });
+    r.answers = r.forms.concat(extra);
+  });
+  function abTier(r) { return r.len <= 24 ? 1 : r.len <= 34 ? 2 : 3; }
+  function makeAbbrQ() {
+    var full = S.mode.abbr === 'full', tmax = tierMax();
+    var pool = ABBR.filter(function (r) { return abTier(r) <= tmax && !S.abUsed[r.k] && !S.drops.some(function (d) { return d.ab === r.k; }); });
+    if (!pool.length) { S.abUsed = {}; pool = ABBR.filter(function (r) { return abTier(r) <= tmax && !S.drops.some(function (d) { return d.ab === r.k; }); }); }
+    var r = P(pool); S.abUsed[r.k] = 1;
+    var main = r.forms[0];
+    return { q: full ? r.k : main, a: full ? r.answers : [r.k], show: full ? main : r.k, ab: r.k,
+      why: r.ko,
+      g: { wk: 'ab', tier: abTier(r), cat: full ? '약어 → 풀네임' : '풀네임 → 약어', tag: '약어' } };
+  }
 
   /* ------------------------------------------------------------ 한/영 입력 */
   var CHO = 'rRseEfaqQtTdwWczxvg', JUNG = ['k', 'o', 'i', 'O', 'j', 'p', 'u', 'P', 'h', 'hk', 'ho', 'hl', 'y', 'n', 'nj', 'np', 'nl', 'b', 'm', 'ml', 'l'];
@@ -215,7 +247,7 @@
   function newGame(mi) {
     cancelAnimationFrame(raf);
     S = { mi: mi, mode: MODES[mi], hearts: 5, score: 0, level: 1, cleared: 0, combo: 0, maxCombo: 0, wrong: 0, missed: [], drops: [], t: 0, spawnT: 1.2,
-      freeze: 0, paused: false, over: false, recent: [], scale: 1, feed: null, levelMsg: null, catMiss: {} };
+      freeze: 0, paused: false, over: false, recent: [], abUsed: {}, scale: 1, feed: null, levelMsg: null, catMiss: {} };
     build();
     last = performance.now();
     raf = requestAnimationFrame(loop);
@@ -223,11 +255,12 @@
   }
 
   function tierMax() { return S.level >= 5 ? 3 : S.level >= 3 ? 2 : 1; }
-  function fallTime() { return Math.max(9, 22 - (S.level - 1) * 1.3); }
-  function spawnGap() { return Math.max(1.7, 4.2 - (S.level - 1) * .28); }
-  function maxOn() { return Math.min(8, 3 + S.level); }
+  function fallTime() { return S.mode.abbr === 'full' ? Math.max(13, 24 - (S.level - 1) * 1.1) : Math.max(9, 22 - (S.level - 1) * 1.3); }
+  function spawnGap() { return S.mode.abbr === 'full' ? Math.max(2.8, 5.2 - (S.level - 1) * .25) : Math.max(1.7, 4.2 - (S.level - 1) * .28); }
+  function maxOn() { return S.mode.abbr === 'full' ? Math.min(5, 2 + Math.ceil(S.level / 2)) : Math.min(8, 3 + S.level); }
 
   function makeQ() {
+    if (S.mode.abbr) return makeAbbrQ();
     var pool = GENS.filter(function (g) { return S.mode.wk.indexOf(g.wk) >= 0 && g.tier <= tierMax(); });
     for (var tries = 0; tries < 12; tries++) {
       var g = P(pool), q = g.gen();
@@ -242,7 +275,7 @@
     var el = document.createElement('div');
     el.className = 'drop' + (item ? ' item ' + item : '');
     el.style.setProperty('--wc', WKC[g.wk]);
-    el.innerHTML = '<span class="cat">' + (item ? { umb: '☂ 우산', stop: '❄ 얼음', heal: '❤ 회복' }[item] + ' · ' : '') + esc(g.cat) + ' <i>W' + g.wk + '</i></span><span class="q">' + esc(q.q) + '</span>';
+    el.innerHTML = '<span class="cat">' + (item ? { umb: '☂ 우산', stop: '❄ 얼음', heal: '❤ 회복' }[item] + ' · ' : '') + esc(g.cat) + ' <i>' + (g.tag || 'W' + g.wk) + '</i></span><span class="q">' + esc(q.q) + '</span>';
     fieldEl.appendChild(el);
     var w = el.offsetWidth, h = el.offsetHeight;
     // 최근 떨어진 것들과 겹치지 않는 x
@@ -253,8 +286,9 @@
       if (dmin > best) { best = dmin; x = cx; }
       if (dmin > 20) break;
     }
-    var d = { id: ++uid, el: el, x: x, y: -h - 4, w: w, h: h, a: q.a.map(norm), show: q.show, q: q.q, why: q.why, g: g, item: item,
-      v: (FIELD_H - GROUND + h) / (fallTime() * (g.tier === 3 ? 1.35 : g.tier === 2 ? 1.12 : 1)) };
+    var slow = S.mode.abbr === 'full' ? 1 + Math.max(0, q.show.length - 12) / 30 : (g.tier === 3 ? 1.35 : g.tier === 2 ? 1.12 : 1);   // 긴 풀네임은 칠 시간이 더 필요하다
+    var d = { id: ++uid, el: el, x: x, y: -h - 4, w: w, h: h, a: q.a.map(S.mode.abbr === 'full' ? abNorm : norm), show: q.show, q: q.q, why: q.why, g: g, item: item, ab: q.ab,
+      v: (FIELD_H - GROUND + h) / (fallTime() * slow) };
     el.style.left = x + 'px'; el.style.transform = 'translateY(' + d.y + 'px)';
     S.drops.push(d);
   }
@@ -287,9 +321,9 @@
   function removeDrop(d) { var i = S.drops.indexOf(d); if (i >= 0) S.drops.splice(i, 1); }
   function submit(raw) {
     if (!S || S.over || S.paused) return;
-    var a1 = norm(raw), a2 = norm(qwerty(raw));
-    if (!a1 && !a2) return;
-    var hits = S.drops.filter(function (d) { return d.a.indexOf(a1) >= 0 || (a2 && d.a.indexOf(a2) >= 0); });
+    var a1 = norm(raw), a2 = norm(qwerty(raw)), a3 = abNorm(raw), a4 = abNorm(qwerty(raw));
+    if (!a1 && !a2 && !a3) return;
+    var hits = S.drops.filter(function (d) { return [a1, a2, a3, a4].some(function (x) { return x && d.a.indexOf(x) >= 0; }); });
     if (!hits.length) {
       S.combo = 0; S.wrong++; NA.sfx.bad();
       inputEl.classList.remove('shake'); void inputEl.offsetWidth; inputEl.classList.add('shake');
@@ -309,7 +343,7 @@
     var lv = 1 + Math.floor(S.cleared / 8);
     if (lv > S.level) {
       var oldT = tierMax(); S.level = lv; NA.sfx.perfect();
-      toast('LEVEL ' + lv, tierMax() > oldT ? (tierMax() === 2 ? '새 문제: 서브넷·상태·seq/ack 등 계산 문제가 섞인다' : '새 문제: 네트워크 주소·cwnd·TTL 계산') : '빗줄기가 조금 빨라진다');
+      toast('LEVEL ' + lv, tierMax() > oldT ? (S.mode.abbr ? (tierMax() === 2 ? '더 긴 이름이 섞인다 (25~34자)' : '가장 긴 이름까지 모두 나온다') : tierMax() === 2 ? '새 문제: 서브넷·상태·seq/ack 등 계산 문제가 섞인다' : '새 문제: 네트워크 주소·cwnd·TTL 계산') : '빗줄기가 조금 빨라진다');
     }
     drawHud();
   }
@@ -338,7 +372,7 @@
     fieldEl.appendChild(sp);
     setTimeout(function () { d.el.remove(); }, 500); fieldEl.querySelectorAll('.splash').forEach(function (o) { if (o !== sp) o.remove(); });
     setTimeout(function () { sp.remove(); }, 2600);
-    S.missed.unshift({ q: d.q, show: d.show, why: d.why, cat: d.g.cat, wk: d.g.wk });
+    S.missed.unshift({ q: d.q, show: d.show, why: d.why, cat: d.g.cat, wk: d.g.wk, tag: d.g.tag || 'W' + d.g.wk });
     S.catMiss[d.g.cat] = (S.catMiss[d.g.cat] || 0) + 1;
     groundEl.classList.remove('hit'); void groundEl.offsetWidth; groundEl.classList.add('hit');
     drawHud(); drawNotes();
@@ -354,8 +388,8 @@
       '<span class="sp"></span><button class="na-btn" data-pause>일시정지 (Esc)</button></div>' +
       '<div class="main"><div class="left">' +
         '<div class="field"><div class="rain"></div><div class="toast" hidden></div><div class="ground"><span>지반</span></div></div>' +
-        '<div class="inrow"><span class="lbl">⌨ 답</span><input class="ans" type="text" autocomplete="off" spellcheck="false" maxlength="24" placeholder="정답을 치고 Enter (한/영 상관없음)">' +
-          '<div class="feed">숫자·영문·한글 모두 OK. 예) 443, syn, ㅅ체(tcp), 클라이언트</div></div>' +
+        '<div class="inrow"><span class="lbl">⌨ 답</span><input class="ans" type="text" autocomplete="off" spellcheck="false" maxlength="64" placeholder="정답을 치고 Enter (한/영 상관없음)">' +
+          '<div class="feed">' + (S.mode.abbr ? '띄어쓰기 · 대소문자 · 하이픈 · 괄호 설명은 무시한다. 예) cross origin resource sharing' : '숫자·영문·한글 모두 OK. 예) 443, syn, ㅅ체(tcp), 클라이언트') + '</div></div>' +
       '</div><div class="side"><div class="panel notes"><h4>☂ 오답 노트 <small>바닥에 닿은 문제</small></h4><div data-notes></div></div>' +
         '<div class="panel tip"><h4>규칙</h4><p>떨어지는 문제의 답을 치고 <b>Enter</b>. 바닥에 닿으면 지반 ♥ −1, 다 녹으면 끝.</p>' +
         '<p>8문제마다 LEVEL↑. 금테 문제는 아이템: <b>☂</b> 화면 정리 · <b>❄</b> 4초 멈춤 · <b>❤</b> 회복</p>' +
@@ -369,8 +403,7 @@
     setTimeout(function () { inputEl.focus(); }, 50);
   }
   function onKey(e) {
-    if (e.key === 'Escape') { e.preventDefault(); return pause(true); }
-    if (e.key !== 'Enter') return;
+    if (e.key !== 'Enter') return;   // Esc는 아래 문서 단위 처리기 하나에서만 다룬다
     e.preventDefault();
     if (e.isComposing || e.keyCode === 229) { setTimeout(take, 20); return; }  // 한글 조합 중이면 조합이 끝난 뒤 읽는다
     take();
@@ -387,7 +420,7 @@
   function setFeed(cls, html) { feedEl.className = 'feed ' + cls; feedEl.innerHTML = html; }
   function drawNotes() {
     notesEl.innerHTML = S.missed.length ? S.missed.slice(0, 3).map(function (m) {
-      return '<div class="note" style="--wc:' + WKC[m.wk] + '"><span class="c">' + esc(m.cat) + ' · W' + m.wk + '</span><span class="q">' + esc(m.q) + '</span><span class="a">정답 <b>' + esc(m.show) + '</b> — ' + esc(m.why) + '</span></div>';
+      return '<div class="note" style="--wc:' + WKC[m.wk] + '"><span class="c">' + esc(m.cat) + ' · ' + esc(m.tag) + '</span><span class="q">' + esc(m.q) + '</span><span class="a">정답 <b>' + esc(m.show) + '</b>' + (m.why ? ' — ' + esc(m.why) : '') + '</span></div>';
     }).join('') : '<p class="empty">아직 없다. 놓친 문제는 여기서 정답과 해설을 보여 준다.</p>';
   }
   var toastTimer = 0;
@@ -411,8 +444,13 @@
     ov.querySelector('[data-go]').onclick = function () { pause(false); };
     ov.querySelector('[data-quit]').onclick = function () { S.paused = false; gameOver(true); };
   }
+  // Esc 하나로 멈춤/계속. 입력칸에 포커스가 있든 없든 여기서만 처리한다
+  // (입력칸과 문서에서 따로 처리하면 같은 키 입력이 멈춤 → 즉시 계속으로 두 번 처리된다)
   document.addEventListener('keydown', function (e) {
-    if (S && S.paused && !S.over && e.key === 'Escape') { e.preventDefault(); pause(false); }
+    if (e.key !== 'Escape' || !S || S.over) return;
+    e.preventDefault();
+    if (!S.paused) { if (ov.hidden) pause(true); }
+    else if (ov.querySelector('[data-quit]')) pause(false);
   });
   document.addEventListener('visibilitychange', function () { if (document.hidden && S && !S.over && !S.paused) pause(true); });
 
@@ -435,7 +473,7 @@
       '<div class="rs-top"><div class="big">' + S.score + '<small>점' + (isBest && S.score ? ' · 최고 기록!' : prev ? ' · 최고 ' + prev.score : '') + '</small></div><div class="stars">' + NA.ui.stars(stars) + '</div></div>' +
       '<div class="stat-grid">' + stat('LEVEL', S.level) + stat('버틴 시간', fmtT(S.t)) + stat('맞힘', S.cleared) + stat('정확도', acc + '%') + stat('최대 콤보', S.maxCombo) + '</div>' +
       (worst.length ? '<p class="weak">자주 놓친 유형: ' + worst.map(function (c) { return '<b>' + esc(c) + '</b> ' + S.catMiss[c] + '번'; }).join(' · ') + '</p>' : '') +
-      '<div class="rnotes">' + (notes.length ? notes.map(function (m) { return '<div class="note" style="--wc:' + WKC[m.wk] + '"><span class="q">' + esc(m.q) + '</span><span class="a">정답 <b>' + esc(m.show) + '</b> — ' + esc(m.why) + '</span></div>'; }).join('') : '<p class="empty">놓친 문제 없음!</p>') + '</div>' +
+      '<div class="rnotes">' + (notes.length ? notes.map(function (m) { return '<div class="note" style="--wc:' + WKC[m.wk] + '"><span class="q">' + esc(m.q) + '</span><span class="a">정답 <b>' + esc(m.show) + '</b>' + (m.why ? ' — ' + esc(m.why) : '') + '</span></div>'; }).join('') : '<p class="empty">놓친 문제 없음!</p>') + '</div>' +
       '<div class="na-row"><button class="na-btn primary" data-retry>다시 하기 (Enter)</button><button class="na-btn" data-menu>모드 선택</button></div></div>';
     ov.hidden = false;
     var card = ov.querySelector('.na-card');
@@ -449,12 +487,12 @@
   function menu() {
     cancelAnimationFrame(raf); S = null; app.innerHTML = '';
     var gm = NA.GAME_BY_ID[GAME_ID];
-    var html = '<div class="na-card"><h2>' + esc(gm.title) + '</h2><p class="sub">' + esc(gm.pitch) + '</p>' +
+    var html = '<div class="na-card ar-menu"><h2>' + esc(gm.title) + '</h2><p class="sub">' + esc(gm.pitch) + '</p>' +
       '<div class="howto">하늘에서 네트워크 문제가 떨어진다. 바닥에 닿기 전에 <b>답을 치고 Enter</b>. 바닥에 닿으면 지반 ♥ −1, 5칸이 다 녹을 때까지 <b>끝나지 않는다</b>.<br>' +
       '문제는 매번 무작위로 만들어지니(IP·포트·seq 번호…) 외울 수 없다. 한/영 상태는 신경 쓰지 않아도 된다. <span class="key">Esc</span> 일시정지</div><div class="stage-list">';
     MODES.forEach(function (m, i) {
       var b = NA.progress.best(GAME_ID, i);
-      html += '<button class="stage-btn" data-i="' + i + '"><span class="n">' + (i === 0 ? 'WEEK 1–4' : 'WEEK ' + m.wk[0]) + '</span><span class="t">' + esc(m.title) + '</span><span class="d">' + esc(m.desc) + '</span>' +
+      html += '<button class="stage-btn" data-i="' + i + '"><span class="n">' + (m.abbr ? 'WEEK 1–5 · 약어' : i === 0 ? 'WEEK 1–4' : 'WEEK ' + m.wk[0]) + '</span><span class="t">' + esc(m.title) + '</span><span class="d">' + esc(m.desc) + '</span>' +
         '<span class="stars">' + (b ? NA.ui.stars(b.stars) + '  최고 ' + b.score + '점' : '기록 없음') + '</span></button>';
     });
     html += '</div><div class="na-row"><a class="na-btn" href="../../index.html">← 아케이드 허브</a><button class="na-btn" data-mute>' + (NA.sfx.muted ? '소리 켜기' : '소리 끄기') + '</button></div></div>';

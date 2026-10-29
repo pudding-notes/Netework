@@ -226,8 +226,8 @@ NA.GAMES = [
   { id: 'packet-ninja', week: 5, ready: true, weekLabel: 'WEEK 2–4', mode: 'endless', title: '패킷 닌자', genre: '과일닌자 · 무한 모드',
     pitch: '튀어 오르는 패킷을 방화벽 규칙대로 벤다. 차단이면 베고 허용이면 서버로 떨어뜨린다. 규칙은 15개마다 바뀐다.',
     qc: ['W2-7'] },
-  { id: 'acid-rain', week: 5, ready: true, weekLabel: 'WEEK 1–4', mode: 'endless', title: '프로토콜 산성비', genre: '타자 · 무한 모드',
-    pitch: '떨어지는 네트워크 문제에 답을 쳐서 막는다. 문제는 매번 새 숫자로 나오고, 지반이 다 녹을 때까지 끝나지 않는다.',
+  { id: 'acid-rain', week: 5, ready: true, weekLabel: 'WEEK 1–5', mode: 'endless', title: '프로토콜 산성비', genre: '타자 · 무한 모드',
+    pitch: '떨어지는 네트워크 문제와 약어에 답을 쳐서 막는다. 약어 134개의 풀네임 모드 포함. 지반이 다 녹을 때까지 끝나지 않는다.',
     qc: [] }
 ];
 NA.GAME_BY_ID = {};
