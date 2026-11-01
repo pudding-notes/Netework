@@ -310,6 +310,108 @@ const ABBR = [
 ];
 const AB_EXTRA = { MAC: ['Medium Access Control'], ACK: ['Acknowledgement'], SACK: ['Selective Acknowledgement'], SSL: ['Secure Socket Layer'], HOL: ['Head-of-Line Blocking'], cwnd: ['Congestion Window'], rwnd: ['Receive Window'], CRLF: ['Carriage Return Line Feed'] };
 ABBR.forEach(r => { if (AB_EXTRA[r[0]]) r[1] = r[1].concat(AB_EXTRA[r[0]]); });
+/* importance (3 = 핵심 개념 · 시험 단골, 2 = 중요, 1 = 참고) + one-line meaning */
+const AB_INFO = {
+  // 1–2주
+  API: [3, '프로그램끼리 기능을 주고받는 약속(계약). Endpoint = 주소 + Port + Path'],
+  ARP: [3, '같은 네트워크에서 IP → MAC을 알아내는 프로토콜 (브로드캐스트로 질문)'],
+  CIDR: [3, '/24처럼 Prefix 길이로 네트워크를 표기 · 클래스 없이 주소를 나눔'],
+  DHCP: [3, 'IP · Mask · Gateway · DNS를 자동으로 빌려 줌 (DORA, Lease)'],
+  DNS: [3, '도메인 이름 → IP. 위임(Root → TLD → 권한) + 캐시(TTL)'],
+  HTTP: [3, '웹의 응용 계층 요청/응답 프로토콜. 시작줄 + 헤더 + 빈 줄 + 본문'],
+  HTTPS: [3, 'HTTP over TLS — 경로상에서 내용이 암호화됨'],
+  IP: [3, 'L3 주소 · 라우팅. 최종 목적지 주소로 끝까지 유지(NAT 없을 때)'],
+  MAC: [3, 'L2 하드웨어 주소. Router를 지날 때마다 새로 씀'],
+  NAT: [3, 'Private ↔ Public 주소 변환. 나가야 돌아온다'],
+  QUIC: [3, 'UDP 위의 신뢰성 + 암호화 전송 → HTTP/3의 기반, Connection ID'],
+  REST: [3, 'HTTP 위의 API 설계 스타일 (프로토콜 아님) — 자원은 URI, 행위는 Method'],
+  RTT: [3, '요청이 갔다가 응답이 돌아오기까지 왕복 시간 — 체감 지연을 지배'],
+  TCP: [3, '연결형 · 신뢰성 L4. 3-way handshake, Seq/ACK, 재전송, 흐름·혼잡 제어'],
+  TLS: [3, '전송 구간 암호화 · 인증서로 신원 확인 (SSL의 후속)'],
+  UDP: [3, '비연결 · 비신뢰 L4. 8바이트 헤더, 생략으로 빠름 (DNS · 스트리밍 · QUIC)'],
+  URL: [3, 'scheme://host:port/path?query#fragment — host만 DNS로 감'],
+  ACL: [2, '허용/차단 규칙 목록. 클라우드에선 Network ACL = 서브넷 단위'],
+  ALB: [2, 'L7(HTTP) 부하 분산기 — 경로·호스트로 라우팅'],
+  AZ: [2, 'Region 안에서 장애가 분리된 데이터센터 구역'],
+  CDN: [2, '사용자 가까운 곳에 콘텐츠를 캐시해 지연을 줄이는 서버망'],
+  DORA: [2, 'DHCP 4단계: Discover → Offer → Request → ACK'],
+  IGW: [2, 'VPC를 인터넷과 연결하는 관문 (Public Subnet의 경로)'],
+  ISP: [2, '인터넷 접속을 제공하는 통신사 (KT · SKB …)'],
+  LAN: [2, '건물·집 안의 근거리 네트워크'],
+  LB: [2, '여러 서버에 요청을 나눠 주는 장치 (L4/L7)'],
+  MQTT: [2, 'Broker를 거치는 Pub/Sub 경량 IoT 메시지 프로토콜'],
+  NAPT: [2, 'IP와 Port까지 바꾸는 NAT (= PAT) — 공유기의 실제 동작'],
+  NIC: [2, '네트워크 인터페이스 카드 — 0.0.0.0 bind = 모든 NIC에서 수신'],
+  PAT: [2, 'Port까지 바꾸는 주소 변환 (= NAPT)'],
+  SSL: [2, 'TLS의 이전 이름 — 관습적으로 “SSL 인증서”'],
+  VPC: [2, '클라우드 안의 나만의 격리된 사설 네트워크'],
+  WAN: [2, '도시·국가를 잇는 광역 네트워크'],
+  AI: [1, '인공지능'], BLE: [1, '저전력 근거리 무선 (IoT 센서)'], GPU: [1, '병렬 연산 장치 — AI 추론·학습 서버'], IoT: [1, '센서·장치가 네트워크로 연결된 환경'], SSH: [1, '원격 서버 접속용 암호화 셸 (TCP 22)'],
+  // 3주
+  ACK: [3, '“여기까지 받았다” 확인. ack = 다음에 받을 바이트 번호 (누적)'],
+  AIMD: [3, '혼잡 회피 규칙: 천천히 +1, 손실 시 ½'],
+  cwnd: [3, '송신자가 추정한 네트워크 감당량 (혼잡 제어). 전송량 = min(rwnd, cwnd)'],
+  FIN: [3, '“보낼 것 끝” — 연결 종료 플래그 (4-way)'],
+  MSS: [3, 'TCP 세그먼트 데이터 최대 크기 = MTU − 40 = 1460B'],
+  MTU: [3, '링크가 한 번에 실을 수 있는 최대 패킷 크기 (이더넷 1500B)'],
+  RST: [3, '연결 즉시 거절·중단 — Connection refused의 정체'],
+  RTO: [3, '재전송 타이머 = SRTT + 4×RTTVAR. 타임아웃 반복 시 2배 (backoff)'],
+  rwnd: [3, '수신자가 광고하는 남은 버퍼 (흐름 제어). 0이면 정지'],
+  SYN: [3, '연결 시작 · 시퀀스 번호 동기화 플래그 (3-way handshake)'],
+  BDP: [2, '대역폭 × RTT = 파이프를 채우는 데 필요한 윈도우 크기'],
+  DEMUX: [2, '도착한 세그먼트를 포트(UDP 2-tuple · TCP 4-tuple)로 소켓에 나눠 줌'],
+  FD: [2, '소켓도 OS에서는 파일 디스크립터 — 닫지 않으면 누수'],
+  HOL: [2, '앞의 하나가 막혀 뒤가 전부 대기 (HTTP/2의 TCP HOL)'],
+  ISN: [2, '연결마다 무작위로 정하는 첫 Seq 번호'],
+  MSL: [2, '세그먼트가 네트워크에 살 수 있는 최대 시간 — TIME_WAIT = 2×MSL'],
+  MUX: [2, '여러 앱의 데이터를 하나의 링크로 내보냄 (포트로 구분)'],
+  SACK: [2, '빠진 구간만 골라 알려 주는 선택적 확인응답'],
+  SRTT: [2, 'RTT의 지수 가중 이동평균 (RTO 계산의 기준)'],
+  ssthresh: [2, 'Slow Start(×2) → Congestion Avoidance(+1) 전환 기준. 손실 시 cwnd/2'],
+  AF_INET: [1, 'IPv4 주소 체계 소켓'], AF_UNIX: [1, '같은 컴퓨터 안 프로세스 간 소켓'], BBR: [1, '대역폭·RTT를 측정해 속도를 정하는 Google 혼잡 제어'],
+  EADDRINUSE: [1, '포트 사용 중 → bind 실패 (TIME_WAIT 시 SO_REUSEADDR)'], EMFILE: [1, '열린 파일(소켓) 수 한도 초과 — 소켓 누수 의심'], EPIPE: [1, '이미 닫힌 연결에 쓰기'],
+  FCS: [1, '이더넷 프레임 끝의 오류 검출 값'], gRPC: [1, 'HTTP/2 기반 RPC 프레임워크'], IANA: [1, '포트 번호·IP 대역을 관리하는 기관'], LLM: [1, '대규모 언어 모델'], mDNS: [1, 'LAN 안에서 멀티캐스트로 이름 해석 (.local)'],
+  nc: [1, 'TCP/UDP 연결 테스트 도구'], PSH: [1, '버퍼링하지 말고 바로 앱에 전달'], RTTVAR: [1, 'RTT 변동폭 — RTO에 4배로 반영'], SO_REUSEADDR: [1, 'TIME_WAIT 중에도 같은 포트 bind 허용'], SOCK_DGRAM: [1, 'UDP 소켓 타입'], SOCK_STREAM: [1, 'TCP 소켓 타입'],
+  ss: [1, '소켓 상태 확인 명령 (Recv-Q · Send-Q)'], SSE: [1, '서버 → 클라이언트 단방향 실시간 스트림 (HTTP)'], TCB: [1, '연결마다 커널이 유지하는 상태 정보'], URG: [1, '긴급 데이터 플래그 (거의 안 씀)'],
+  // 4주
+  CA: [3, '인증서를 서명·발급하는 신뢰 기관 — 체인 Leaf → Intermediate → Root'],
+  CORS: [3, '다른 Origin 응답을 JS가 읽도록 서버가 허용하는 브라우저 규칙'],
+  JSON: [3, 'API에서 주고받는 텍스트 데이터 형식 {"key": value}'],
+  SNI: [3, 'TLS ClientHello에 담는 접속 도메인 — 평문이라 경로상에서 보임'],
+  TLD: [3, '.com · .kr 같은 최상위 도메인 (Root 다음 단계)'],
+  TTL: [3, 'DNS·캐시 응답을 재사용해도 되는 시간(초) — IP 헤더 TTL은 hop 한도'],
+  CNAME: [2, '별칭 레코드 → 원래 이름으로. apex에는 둘 수 없음'],
+  CRLF: [2, '줄바꿈 \\r\\n — 빈 줄(CRLF CRLF)이 헤더 끝'],
+  ECDHE: [2, '연결마다 일회용 키를 만드는 키 교환 → Forward Secrecy'],
+  ETag: [2, '응답 버전 식별자 — If-None-Match로 검증, 같으면 304'],
+  FQDN: [2, '끝에 점까지 붙은 완전한 도메인 이름 (www.example.com.)'],
+  HSTS: [2, '“앞으로 HTTPS로만 접속하라” 응답 헤더'],
+  JWT: [2, '서명된 토큰 (Header.Payload.Signature) — Bearer로 전달'],
+  MX: [2, '그 도메인의 메일 서버를 지정하는 레코드'],
+  NS: [2, '그 영역을 담당하는 권한 네임 서버 레코드 (위임)'],
+  NXDOMAIN: [2, '“그런 이름 없음” DNS 응답 — negative caching됨'],
+  PFS: [2, '서버 개인키가 나중에 유출돼도 과거 트래픽은 안전'],
+  PTR: [2, 'IP → 도메인 역방향 조회 레코드'],
+  SAN: [2, '인증서가 유효한 도메인 목록 — 접속 도메인과 일치해야 함'],
+  SOA: [2, '영역의 기본 정보 (일련번호 · negative TTL)'],
+  TTFB: [2, '요청 후 첫 바이트까지 시간 ≈ 서버 처리 + 1 RTT'],
+  AAAA: [1, 'IPv6 주소 레코드'], ACME: [1, '인증서 자동 발급·갱신 프로토콜 (Let’s Encrypt)'], AEAD: [1, '암호화 + 무결성을 한 번에 (AES-GCM)'], AES: [1, '대표적인 대칭키 암호'], ALPN: [1, 'TLS 중에 h2 · http/1.1 협상'],
+  CAA: [1, '이 도메인 인증서를 발급할 수 있는 CA 지정'], ccTLD: [1, '국가 코드 TLD (.kr)'], CN: [1, '인증서 주체 이름 (지금은 SAN을 봄)'], CRL: [1, '폐기된 인증서 목록'], DoH: [1, 'HTTPS로 DNS 질의'], DoT: [1, 'TLS로 DNS 질의 (853)'],
+  DV: [1, '도메인 소유만 확인하는 인증서'], ECDSA: [1, '타원곡선 전자서명'], ECH: [1, 'ClientHello(SNI까지) 암호화'], gTLD: [1, '일반 TLD (.com · .org)'], HPACK: [1, 'HTTP/2 헤더 압축'], MIME: [1, 'Content-Type의 형식 이름 (application/json)'],
+  OCSP: [1, '인증서 폐기 여부 실시간 조회'], QPACK: [1, 'HTTP/3 헤더 압축'], RSA: [1, '대표적인 공개키 암호'], SERVFAIL: [1, 'DNS 서버가 답을 못 함'], TTFT: [1, 'LLM 응답 첫 토큰까지 시간'], TXT: [1, '임의 텍스트 레코드 (도메인 소유 인증 등)'],
+  // 5주
+  CRUD: [3, 'Create · Read · Update · Delete ↔ POST · GET · PUT/PATCH · DELETE'],
+  SOP: [3, '다른 Origin(scheme + host + port)의 응답을 JS가 못 읽게 하는 브라우저 기본 정책'],
+  URI: [3, '자원의 식별자 — 명사 · 복수형 (/students/10)'],
+  HATEOAS: [2, '응답에 다음 행동 링크 포함 — Richardson Level 3'],
+  HTML: [2, '웹 페이지 문서 형식 — 과거 서버 렌더링 응답'],
+  OAS: [2, 'OpenAPI 명세 — API 계약을 JSON·YAML로 (Swagger UI)'],
+  RMM: [2, 'Richardson 성숙도 0~3: POX → 자원 URI → Method·상태 코드 → HATEOAS'],
+  RPC: [2, '원격 함수 호출 스타일 — 동사 중심 (REST와 대비)'],
+  ASGI: [1, 'Python 비동기 웹 서버 인터페이스 (Uvicorn ↔ FastAPI)'], CSRF: [1, '로그인된 브라우저로 다른 사이트가 요청을 위조'], DB: [1, '데이터베이스'], ISO: [1, '국제표준화기구'], JS: [1, '브라우저 스크립트 언어'], JSP: [1, 'Java 서버 페이지 렌더링'],
+  OAuth: [1, '비밀번호 없이 권한을 위임하는 인가 표준'], ORM: [1, '객체 ↔ DB 테이블 매핑'], POX: [1, 'XML을 POST 하나로 주고받는 Level 0 방식'], RFC: [1, '인터넷 표준 문서'], SPA: [1, '한 페이지에서 JS가 화면을 바꾸는 앱'], SQL: [1, 'DB 질의 언어'],
+  SSR: [1, '서버가 HTML을 완성해 보냄'], UI: [1, '사용자 화면'], XHR: [1, '브라우저 비동기 요청 API (fetch 이전)'], XML: [1, '태그 기반 데이터 형식'], XSS: [1, '페이지에 악성 스크립트 삽입'], YAML: [1, '들여쓰기 기반 설정·명세 형식'],
+};
 /* descriptive glossary entries that are not real expansions — practice only, never in the mock exam */
 const AB_SKIP = new Set(['AAAA', 'TXT', 'HPACK', 'QPACK', 'SOCK_DGRAM', 'SOCK_STREAM', 'AF_INET', 'AF_UNIX', 'nc', 'ss', 'JS', 'DB', 'UI', 'AI', 'gRPC']);
 const AB_WK = { 'w1-2': '1–2주', w3: '3주', w4: '4주', w5: '5주' };
@@ -379,8 +481,9 @@ function mountExam(host) {
     const freshSel = pick(fresh, nOx - pastSel.length, x => W.has(x.id));
     const oxs = R.shuffle(pastSel.concat(freshSel));
     const AW = new Set(LS.get('ab.wrong', []));
-    const abPool = ABBR.filter(r => !AB_SKIP.has(r[0]) && abWeeksOf(r).some(w => sel.includes(w)));
-    const abSel = pick(abPool, nAb * 3, r => AW.has(r[0]));
+    const abPool = ABBR.filter(r => !AB_SKIP.has(r[0]) && tierOf(r[0]) >= 2 && abWeeksOf(r).some(w => sel.includes(w)));
+    const nT3 = Math.ceil(nAb * 3 * 0.7), t3 = pick(abPool.filter(r => tierOf(r[0]) === 3), nT3, r => AW.has(r[0]));
+    const abSel = R.shuffle(t3.concat(pick(abPool.filter(r => !t3.includes(r)), nAb * 3 - t3.length, r => AW.has(r[0]) && tierOf(r[0]) === 3))).slice(0, nAb * 3);
     const abs = []; for (let k = 0; k < nAb && abSel.length >= (k + 1) * 3; k++) abs.push({ t: 'ab', terms: abSel.slice(k * 3, k * 3 + 3).map(r => r[0]) });
     const EW = new Set(LS.get('es.wrong', []));
     const ess = pick(essayPool().filter(q => sel.includes(q.w)), nEs, q => EW.has(q.id)).map(q => ({ t: 'es', id: q.id }));
@@ -415,7 +518,7 @@ ${WEEKS.map(w => `<div class="ctl tog"><input type="checkbox" id="mt-${w}" ${cfg
         h += `<div class="oxq-t">${it.q}</div><div class="oxbtn"><button data-ox="O" class="o ${it.pick ? (it.a === 'O' ? 'right' : it.pick === 'O' ? 'wrong' : 'dim') : ''}" ${it.pick ? 'disabled' : ''}>O</button><button data-ox="X" class="x ${it.pick ? (it.a === 'X' ? 'right' : it.pick === 'X' ? 'wrong' : 'dim') : ''}" ${it.pick ? 'disabled' : ''}>X</button></div>`;
         if (it.pick) h += `<div class="model"><div class="mh">${it.pick === it.a ? '⭕ 정답' : '❌ 오답'} — 정답은 ${it.a}</div>${it.why}<div style="margin-top:6px">${H.ref(it.ref, '관련 설명으로 이동')}</div></div>`;
       } else if (it.t === 'ab') {
-        h += `<div class="oxq-t">다음 약어의 원래 이름(full name)을 모두 적으시오.</div><div class="ab-rows">${it.terms.map((t, j) => { const r = abRow(t), ok = it.ov[j] != null ? it.ov[j] : abCheck(it.ans[j] || '', r[1]); return `<div class="ab-row ${it.checked ? (ok ? 'ok' : 'no') : ''}"><b class="mono">${esc(t)}</b><input type="text" data-ab="${j}" value="${esc(it.ans[j] || '')}" ${it.checked ? 'disabled' : ''} autocomplete="off" spellcheck="false" placeholder="영문 원래 이름">${it.checked ? `<div class="ab-ans">${ok ? '⭕' : '❌'} ${r[1].map(esc).join(' <span class="cm">/</span> ')} <span class="cm">· ${r[2].map(g => AB_WK[g]).join(', ')}</span>${!ok ? ` <button class="btn sm" data-ov="${j}">맞은 걸로</button>` : it.ov[j] ? ` <button class="btn sm" data-ov="${j}">취소</button>` : ''}</div>` : ''}</div>`; }).join('')}</div>`;
+        h += `<div class="oxq-t">다음 약어의 원래 이름(full name)을 모두 적으시오.</div><div class="ab-rows">${it.terms.map((t, j) => { const r = abRow(t), ok = it.ov[j] != null ? it.ov[j] : abCheck(it.ans[j] || '', r[1]); return `<div class="ab-row ${it.checked ? (ok ? 'ok' : 'no') : ''}"><b class="mono">${esc(t)}</b><input type="text" data-ab="${j}" value="${esc(it.ans[j] || '')}" ${it.checked ? 'disabled' : ''} autocomplete="off" spellcheck="false" placeholder="영문 원래 이름">${it.checked ? `<div class="ab-ans">${ok ? '⭕' : '❌'} ${r[1].map(f => abHL(f, r[0])).join(' <span class="cm">/</span> ')} <span class="cm">· ${TIER[tierOf(t)][0]} · ${esc(meanOf(t))}</span>${!ok ? ` <button class="btn sm" data-ov="${j}">맞은 걸로</button>` : it.ov[j] ? ` <button class="btn sm" data-ov="${j}">취소</button>` : ''}</div>` : ''}</div>`; }).join('')}</div>`;
         if (!it.checked) h += `<div style="margin-top:10px"><button class="btn pri" data-abchk>채점</button> <span class="cm" style="font-size:13px">대소문자 · 띄어쓰기 · 하이픈 · 괄호 속 보충 설명은 무시한다</span></div>`;
       } else {
         const q = esById(it.id);
@@ -493,42 +596,92 @@ function mountKey(host) {
   draw();
 }
 
-/* ---------- Abbreviation drill ---------- */
+/* ---------- Abbreviation study: importance first ---------- */
+const TIER = { 3: ['★★★', '핵심'], 2: ['★★', '중요'], 1: ['★', '참고'] };
+const tierOf = k => (AB_INFO[k] || [1])[0];
+const meanOf = k => (AB_INFO[k] || [, ''])[1];
+/* bold the letters of the full name that make up the abbreviation (word starts / capitals first) */
+function abHL(full, ab) {
+  const s = String(full), letters = ab.replace(/[^a-z0-9]/gi, '').toLowerCase(), mark = new Set(); let pos = 0;
+  const strong = j => /[A-Z0-9]/.test(s[j]) || j === 0 || /[\s\-–·:,(+/]/.test(s[j - 1]);
+  for (const c of letters) {
+    let j = -1;
+    for (let t = pos; t < s.length; t++) if (s[t].toLowerCase() === c && strong(t)) { j = t; break; }
+    if (j < 0) for (let t = pos; t < s.length; t++) if (s[t].toLowerCase() === c) { j = t; break; }
+    if (j < 0) break; mark.add(j); pos = j + 1;
+  }
+  return [...s].map((ch, j) => mark.has(j) ? `<b class="ini">${esc(ch)}</b>` : esc(ch)).join('');
+}
+const abCard = (r, big) => `<div class="ab-full${big ? ' big' : ''}">${r[1].map(f => abHL(f, r[0])).join(' <span class="cm">/</span> ')}</div><div class="ab-mean">${esc(meanOf(r[0]))}</div>`;
+
 function mountAbbr(host) {
-  let sel = LS.get('ab.weeks', Object.keys(AB_WK)), deck = [], i = 0, mode = 'drill', st = [];
+  let tiers = LS.get('ab.tiers', [3]), sel = LS.get('ab.weeks', Object.keys(AB_WK)), mode = LS.get('ab.mode', 'learn'), deck = [], i = 0, st = [], hide = true;
+  if (!['learn', 'write', 'table'].includes(mode)) mode = 'learn';
   const box = document.createElement('div'); host.appendChild(box);
+  const getW = () => new Set(LS.get('ab.wrong', [])), getK = () => new Set(LS.get('ab.ok', []));
+  function setRes(k, ok) { const W = getW(), K = getK(); if (ok) { W.delete(k); K.add(k); } else { W.add(k); K.delete(k); } LS.set('ab.wrong', [...W]); LS.set('ab.ok', [...K]); }
+  const inScope = r => tiers.includes(tierOf(r[0])) && r[2].some(g => sel.includes(g));
   function newDeck(onlyWrong) {
-    const W = new Set(LS.get('ab.wrong', []));
-    let p = ABBR.filter(r => r[2].some(g => sel.includes(g))); if (onlyWrong) p = p.filter(r => W.has(r[0]));
-    const R = rng(); deck = R.shuffle(p.filter(r => W.has(r[0]))).concat(R.shuffle(p.filter(r => !W.has(r[0])))); st = deck.map(() => ({ v: '', ok: null })); i = 0; draw();
+    const W = getW(), K = getK(), R = rng(); let p = ABBR.filter(inScope); if (onlyWrong) p = p.filter(r => W.has(r[0]));
+    const rank = r => (W.has(r[0]) ? 0 : K.has(r[0]) ? 2 : 1) * 10 + (3 - tierOf(r[0]));
+    deck = R.shuffle(p).sort((a, b) => rank(a) - rank(b)); st = deck.map(() => ({ v: '', ok: null, open: false })); i = 0; draw();
   }
   function draw() {
-    const W = new Set(LS.get('ab.wrong', [])), done = st.filter(s => s.ok != null), right = done.filter(s => s.ok).length;
-    let h = `<div class="lab oxq"><div class="lab-head"><span class="tag">약어</span>용어표 ${ABBR.length}개 · 영문 원래 이름 쓰기 · 틀린 약어는 먼저 나온다</div><div class="lab-ctl">${Object.entries(AB_WK).map(([g, l]) => `<div class="ctl tog"><input type="checkbox" id="ab-${g}" ${sel.includes(g) ? 'checked' : ''}><label for="ab-${g}">${l} (${ABBR.filter(r => r[2].includes(g)).length})</label></div>`).join('')}<button class="btn pri" data-new>섞어서 시작</button><button class="btn" data-wrong ${W.size ? '' : 'disabled'}>틀린 약어 (${W.size})</button><button class="btn" data-mode>${mode === 'drill' ? '표로 보기' : '연습으로'}</button></div><div class="lab-out">`;
+    const W = getW(), K = getK();
+    const prog = [3, 2, 1].map(t => { const a = ABBR.filter(r => tierOf(r[0]) === t), k = a.filter(r => K.has(r[0])).length; return `<div class="ab-tier t${t}"><span>${TIER[t][0]} ${TIER[t][1]}</span><div class="oxprog"><i style="width:${k / a.length * 100}%"></i></div><b class="mono">${k}/${a.length}</b></div>`; }).join('');
+    let h = `<div class="lab oxq"><div class="lab-head"><span class="tag">약어</span>중요도 순으로 외우기 — ★★★ 핵심 개념부터 · 외운 것은 뒤로, 틀린 것은 앞으로</div>
+<div class="lab-ctl">${[3, 2, 1].map(t => `<div class="ctl tog"><input type="checkbox" id="abt-${t}" ${tiers.includes(t) ? 'checked' : ''}><label for="abt-${t}">${TIER[t][0]} ${TIER[t][1]} (${ABBR.filter(r => tierOf(r[0]) === t).length})</label></div>`).join('')}
+<div class="ctl"><label for="ab-wk">주차</label><select id="ab-wk"><option value="all">전체</option>${Object.entries(AB_WK).map(([g, l]) => `<option value="${g}" ${sel.length === 1 && sel[0] === g ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+<div class="abseg">${[['learn', '외우기'], ['write', '쓰기 시험'], ['table', '한눈에 표']].map(([m, l]) => `<button class="btn sm ${mode === m ? 'pri' : ''}" data-mode="${m}">${l}</button>`).join('')}</div>
+<button class="btn" data-new>섞기</button><button class="btn" data-wrong ${W.size ? '' : 'disabled'}>틀린 것만 (${W.size})</button></div>
+<div class="lab-out"><div class="ab-prog">${prog}</div>`;
     if (mode === 'table') {
-      const list = ABBR.filter(r => r[2].some(g => sel.includes(g)));
-      h += `<div class="ab-tbl">${list.map(r => `<div class="${W.has(r[0]) ? 'wr' : ''}"><b class="mono">${esc(r[0])}</b><span>${r[1].map(esc).join(' / ')}</span></div>`).join('')}</div>`;
-    } else if (!deck.length) h += '<p>선택한 범위에 약어가 없다.</p>';
+      const list = ABBR.filter(inScope);
+      h += `<div style="display:flex;gap:8px;align-items:center;margin:0 0 8px"><button class="btn sm" data-hide>${hide ? '원래 이름 보이기' : '원래 이름 가리기'}</button><span class="cm" style="font-size:13px">${hide ? '가려진 칸을 누르면 하나씩 보인다' : ''}</span></div>`;
+      h += [3, 2, 1].filter(t => list.some(r => tierOf(r[0]) === t)).map(t => `<h4 class="ab-th t${t}">${TIER[t][0]} ${TIER[t][1]}</h4><div class="ab-tbl">${list.filter(r => tierOf(r[0]) === t).map(r => `<div class="${W.has(r[0]) ? 'wr' : K.has(r[0]) ? 'kn' : ''}"><b class="mono">${esc(r[0])}</b><div><div class="ab-full ${hide ? 'veil' : ''}" data-veil>${r[1].map(f => abHL(f, r[0])).join(' / ')}</div><div class="ab-mean">${esc(meanOf(r[0]))}</div></div></div>`).join('')}</div>`).join('') || '<p>선택한 범위에 약어가 없다.</p>';
+    } else if (!deck.length) h += '<p>선택한 범위에 약어가 없다. 중요도나 주차를 넓혀 보자.</p>';
     else if (i < deck.length) {
-      const r = deck[i], s = st[i];
-      h += `<div class="oxbar"><div class="oxprog"><i style="width:${done.length / deck.length * 100}%"></i></div><span class="mono">${i + 1} / ${deck.length} · 정답 ${right}</span></div><div class="oxcard"><div class="oxmeta">${r[2].map(g => AB_WK[g]).join(', ')}${W.has(r[0]) && s.ok == null ? ' · <b>지난번 오답</b>' : ''}</div><div class="ab-big mono">${esc(r[0])}</div><input type="text" class="ab-in" data-in value="${esc(s.v)}" ${s.ok != null ? 'disabled' : ''} autocomplete="off" spellcheck="false" placeholder="원래 이름을 영어로 · Enter로 채점">`;
-      if (s.ok != null) h += `<div class="model"><div class="mh">${s.ok ? '⭕ 정답' : '❌ 오답'}</div><b>${r[1].map(esc).join(' / ')}</b>${!s.ok ? ` <button class="btn sm" data-ov>맞은 걸로</button>` : ''}</div><div style="margin-top:10px"><button class="btn pri" data-next>다음 ▶</button></div>`;
-      else h += `<div style="margin-top:10px;display:flex;gap:8px"><button class="btn pri" data-chk>채점</button><button class="btn" data-skip>모르겠다 (정답 보기)</button></div>`;
+      const r = deck[i], s = st[i], t = tierOf(r[0]);
+      h += `<div class="oxbar"><div class="oxprog"><i style="width:${i / deck.length * 100}%"></i></div><span class="mono">${i + 1} / ${deck.length}</span></div>
+<div class="oxcard"><div class="oxmeta"><span class="ab-badge t${t}">${TIER[t][0]} ${TIER[t][1]}</span> ${r[2].map(g => AB_WK[g]).join(', ')}${W.has(r[0]) && s.ok == null ? ' · <b>지난번에 틀림</b>' : K.has(r[0]) && s.ok == null ? ' · 외운 것' : ''}</div><div class="ab-big mono">${esc(r[0])}</div>`;
+      if (mode === 'learn') {
+        if (!s.open) h += `<p class="cm" style="margin:0 0 10px;font-size:14px">원래 이름을 머릿속으로 말해 본 뒤 펼친다.</p><button class="btn pri" data-open>펼치기 (Space)</button>`;
+        else h += abCard(r, true) + (s.ok == null ? `<div class="ab-self"><button class="btn ok" data-self="1">알았다 ✓ (1)</button><button class="btn no" data-self="0">헷갈렸다 ✗ (2)</button></div>` : `<div style="margin-top:10px"><button class="btn pri" data-next>다음 ▶</button></div>`);
+      } else {
+        h += `<input type="text" class="ab-in" data-in value="${esc(s.v)}" ${s.ok != null ? 'disabled' : ''} autocomplete="off" spellcheck="false" placeholder="원래 이름을 영어로 · Enter로 채점">`;
+        if (s.ok != null) h += `<div class="model"><div class="mh">${s.ok ? '⭕ 정답' : '❌ 오답'}${!s.ok ? ` <button class="btn sm" data-ov>맞은 걸로</button>` : ''}</div>${abCard(r)}</div><div style="margin-top:10px"><button class="btn pri" data-next>다음 ▶</button></div>`;
+        else h += `<div style="margin-top:10px;display:flex;gap:8px"><button class="btn pri" data-chk>채점</button><button class="btn" data-skip>모르겠다</button></div>`;
+      }
       h += '</div>';
-    } else h += `<div class="big">${right} / ${deck.length}</div><p>${deck.length - right ? `틀린 ${deck.length - right}개는 “틀린 약어”로 다시 풀 수 있다.` : '전부 맞혔다.'}</p><button class="btn pri" data-new>다시 섞기</button>`;
+    } else { const ok = st.filter(s => s.ok).length; h += `<div class="big">${ok} / ${deck.length}</div><p>${deck.length - ok ? `헷갈린 ${deck.length - ok}개는 다음 판에 맨 앞에 나온다.` : '이 범위는 전부 외웠다. ★★로 넓혀 보자.'}</p><button class="btn pri" data-new>다시 섞기</button>`; }
     box.innerHTML = h + '</div></div>';
-    const rd = () => { sel = Object.keys(AB_WK).filter(g => box.querySelector('#ab-' + g).checked); if (!sel.length) sel = Object.keys(AB_WK); LS.set('ab.weeks', sel); };
-    box.querySelectorAll('[data-new]').forEach(b => b.onclick = () => { rd(); mode = 'drill'; newDeck(false); });
-    const wb = box.querySelector('[data-wrong]'); if (wb) wb.onclick = () => { rd(); mode = 'drill'; newDeck(true); };
-    box.querySelector('[data-mode]').onclick = () => { rd(); mode = mode === 'drill' ? 'table' : 'drill'; draw(); };
+    const rd = () => { tiers = [3, 2, 1].filter(t => box.querySelector('#abt-' + t).checked); if (!tiers.length) tiers = [3]; const v = box.querySelector('#ab-wk').value; sel = v === 'all' ? Object.keys(AB_WK) : [v]; LS.set('ab.tiers', tiers); LS.set('ab.weeks', sel); };
+    box.querySelectorAll('.lab-ctl input, .lab-ctl select').forEach(c => c.onchange = () => { rd(); newDeck(false); });
+    box.querySelectorAll('[data-new]').forEach(b => b.onclick = () => { rd(); newDeck(false); });
+    box.querySelector('[data-wrong]').onclick = () => { rd(); if (mode === 'table') mode = 'learn'; newDeck(true); };
+    box.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { mode = b.dataset.mode; LS.set('ab.mode', mode); rd(); newDeck(false); });
+    const hb = box.querySelector('[data-hide]'); if (hb) hb.onclick = () => { hide = !hide; draw(); };
+    box.querySelectorAll('[data-veil]').forEach(v => v.onclick = () => v.classList.remove('veil'));
+    const next = () => { i++; draw(); const n = box.querySelector('[data-in]') || box.querySelector('[data-open]'); if (n) n.focus({ preventScroll: true }); };
+    const mark = ok => { st[i].ok = ok; setRes(deck[i][0], ok); draw(); const n = box.querySelector('[data-next]'); if (n) n.focus({ preventScroll: true }); };
+    const op = box.querySelector('[data-open]'); if (op) op.onclick = () => { st[i].open = true; draw(); };
+    box.querySelectorAll('[data-self]').forEach(b => b.onclick = () => mark(b.dataset.self === '1'));
     const inp = box.querySelector('[data-in]');
-    const mark = ok => { const r = deck[i]; st[i].ok = ok; const W2 = new Set(LS.get('ab.wrong', [])); if (ok) W2.delete(r[0]); else W2.add(r[0]); LS.set('ab.wrong', [...W2]); draw(); const n = box.querySelector('[data-next]'); if (n) n.focus(); };
-    if (inp) { inp.oninput = () => st[i].v = inp.value; inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); mark(abCheck(inp.value, deck[i][1])); } }; }
+    if (inp) { inp.oninput = () => st[i].v = inp.value; inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); if (st[i].ok == null) mark(abCheck(inp.value, deck[i][1])); } }; }
     const c = box.querySelector('[data-chk]'); if (c) c.onclick = () => mark(abCheck(inp.value, deck[i][1]));
     const sk = box.querySelector('[data-skip]'); if (sk) sk.onclick = () => mark(false);
     const ov = box.querySelector('[data-ov]'); if (ov) ov.onclick = () => mark(true);
-    const nx = box.querySelector('[data-next]'); if (nx) nx.onclick = () => { i++; draw(); const n = box.querySelector('[data-in]'); if (n) n.focus(); };
+    const nx = box.querySelector('[data-next]'); if (nx) nx.onclick = next;
+    box._next = next; box._mark = mark;
   }
+  document.addEventListener('keydown', e => {
+    if (!box.isConnected || mode !== 'learn' || i >= deck.length || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    const r = box.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
+    const s = st[i];
+    if (!s.open && (e.key === ' ' || e.key === 'Enter')) { s.open = true; draw(); e.preventDefault(); }
+    else if (s.open && s.ok == null && (e.key === '1' || e.key === '2')) { box._mark(e.key === '1'); e.preventDefault(); }
+    else if (s.ok != null && (e.key === 'Enter' || e.key === 'ArrowRight' || e.key === ' ')) { box._next(); e.preventDefault(); }
+  });
   newDeck(false);
 }
 
@@ -568,11 +721,11 @@ addWeek({ id: 'mt', num: 'M', short: '중간고사', title: '중간고사 대비
   blocks: [
     T(['분량', 'OX (기출 + 새 문제)', '약어', '서술', '전체', '기출 최소'], Object.values(SIZES).map(([l, o, a, e]) => { const t = o + a + e, p = Math.ceil(t * 0.3); return [l, `${o} (${p} + ${o - p})`, `${a}문항 × 3`, e, t, `<b>${p}</b> (${Math.round(p / t * 100)}%)`]; })),
     H.key(`<b>기출 30% 보장 규칙</b><br>기출 OX 수 = <b>올림(전체 문항 수 × 30%)</b>. 시험지를 만들 때 이 수만큼 퀴즈 기출 100문항에서 먼저 뽑고, 나머지 OX만 새 문제은행(1~5주차 ${WEEKS.reduce((a, w) => a + (OXBANK[w] || []).length, 0)}문항)에서 채운다.<br>선택한 주차의 기출이 모자라면 범위 밖 기출로 채워서라도 비율을 지킨다. “기출 비중 50% 이상”도 고를 수 있다.`),
-    `<ol><li><b>퀴즈 정답표</b>(M.2)로 100문항의 답과 이유를 훑는다 — 틀린 이유가 “반대로 말함”인 문항(36 · 49 · 62 · 64 · 81 · 93)이 특히 함정.</li><li><b>약어</b>(M.3) — 용어표 Week1-5의 약어를 영문 원래 이름으로 쓴다. 틀린 약어는 다음에 먼저 나온다.</li><li><b>서술형</b>(M.4) — 각 주차 Quick Check와 흐름 문제를 내 말로 쓰고 핵심 요소를 체크한다.</li><li><b>모의시험</b>(M.5)으로 섞어서 실전처럼. 한 화면에 한 문제, 결과는 유형별 · 주차별로.</li></ol>`,
+    `<ol><li><b>퀴즈 정답표</b>(M.2)로 100문항의 답과 이유를 훑는다 — 틀린 이유가 “반대로 말함”인 문항(36 · 49 · 62 · 64 · 81 · 93)이 특히 함정.</li><li><b>약어</b>(M.3) — 용어표 Week1-5의 약어 149개를 중요도 3단계(★★★ 핵심 36 · ★★ 중요 46 · ★ 참고 67)로 나눴다. ★★★부터 “외우기” 카드로 익히고 “쓰기 시험”으로 확인한다. 모의시험의 약어는 ★★★ 70% 이상 + ★★에서만 나온다.</li><li><b>서술형</b>(M.4) — 각 주차 Quick Check와 흐름 문제를 내 말로 쓰고 핵심 요소를 체크한다.</li><li><b>모의시험</b>(M.5)으로 섞어서 실전처럼. 한 화면에 한 문제, 결과는 유형별 · 주차별로.</li></ol>`,
     H.note('세 연습의 오답 기록은 모두 이 브라우저에 저장되고 서로 공유된다 — 정답표에서 빨간 테두리로 보이는 기출, 시험 대비 탭 OX 연습의 “내 오답만”, 모의시험의 우선 출제가 같은 기록을 쓴다.'),
   ] },
 { id: 'mt.key', title: '10/19 퀴즈 OX 100 — 정답과 해설', slides: '중간ox퀴즈.txt', tag: '기출', blocks: [{ mount: mountKey }] },
-{ id: 'mt.abbr', title: '약어 → 원래 이름', slides: '용어표 Week1-2 · 3 · 4 · 5', tag: '연습', blocks: [{ mount: mountAbbr }] },
+{ id: 'mt.abbr', title: '약어 → 원래 이름 (중요도순)', slides: '용어표 Week1-2 · 3 · 4 · 5', tag: '연습', blocks: [{ mount: mountAbbr }] },
 { id: 'mt.essay', title: '개념 · 흐름 서술형', slides: 'Quick Check W1~W5 + 흐름', tag: '연습', blocks: [{ mount: mountEssay }] },
 { id: 'mt.exam', title: '중간고사 모의시험', slides: '기출 ≥ 30%', tag: '실전', blocks: [{ mount: mountExam }] },
 ] });
