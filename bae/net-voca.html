@@ -199,6 +199,21 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .dlg p{margin:0 0 18px;color:var(--ink2);font-size:14px;line-height:1.5}
 .dlg .bt{display:flex;gap:8px}
 .dlg .bt .btn{height:48px;font-size:15px}
+#quiz{position:relative}
+.qbody{touch-action:pan-y}
+.review{position:absolute;left:0;right:0;bottom:0;top:calc(var(--sat) + 52px);background:#fff;z-index:6;display:flex;flex-direction:column;transform:translateX(-104%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:8px 0 24px rgba(0,0,0,.08);touch-action:pan-y}
+.review.on{transform:none}
+.rv-top{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 4px}
+.rv-cnt{font-size:12.5px;font-weight:700;color:var(--mute)}
+.rv-back{display:flex;align-items:center;gap:2px;font-size:13.5px;font-weight:700;color:var(--g-d);padding:6px 4px}
+.rv-body{flex:1;min-height:0;overflow-y:auto;padding:8px 22px 16px;-webkit-overflow-scrolling:touch}
+.rv-body.in-l{animation:inl .22s ease}.rv-body.in-r{animation:inr .22s ease}
+@keyframes inl{from{opacity:0;transform:translateX(-24px)}}@keyframes inr{from{opacity:0;transform:translateX(24px)}}
+.rv-body .info{display:block;margin-top:14px}
+.rv-foot{display:flex;gap:8px;padding:8px 12px calc(var(--sab) + 12px);border-top:1px solid var(--line);background:#F7F8FA}
+.rv-foot .tool:disabled{opacity:.4}
+.chip.r{background:var(--r-bg);color:var(--r)}
+.swipe-tip{margin-left:auto;font-size:12px;font-weight:700;color:var(--mute);padding:5px 4px}
 .toast{position:absolute;left:50%;top:calc(var(--sat) + 64px);transform:translate(-50%,-10px);background:rgba(25,31,40,.92);color:#fff;font-size:13.5px;font-weight:500;padding:10px 16px;border-radius:12px;opacity:0;transition:.2s;z-index:30;pointer-events:none;white-space:nowrap}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .combo{position:absolute;right:22px;top:calc(var(--sat) + 58px);font-weight:900;color:var(--g);font-size:14px;opacity:0;transition:.2s;pointer-events:none}
@@ -250,6 +265,11 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
       <div class="cnt" id="cnt">0/0</div>
     </div>
     <div class="combo" id="combo"></div>
+    <div class="review" id="review" aria-hidden="true">
+      <div class="rv-top"><span class="rv-cnt" id="rvCnt"></span><button class="rv-back" id="rvClose">현재 문제로 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></div>
+      <div class="rv-body" id="rvBody"></div>
+      <div class="rv-foot"><button class="tool" id="rvPrev">‹ 이전 문제</button><button class="tool" id="rvNext">다음 문제 ›</button></div>
+    </div>
     <div class="qbody" id="qbody">
       <div class="chips" id="chips"></div>
       <div class="qcard" id="qcard">
@@ -791,7 +811,7 @@ function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList
 let Q = null, cur = null;
 function start(items){
   if (!items.length) return;
-  Q = { items, queue: items.map(it => ({ it, again: false })), pos: 0, res: new Map(), t0: Date.now(), streak: 0 };
+  Q = { items, queue: items.map(it => ({ it, again: false })), pos: 0, res: new Map(), t0: Date.now(), streak: 0, hist: [] };
   items.forEach(it => Q.res.set(it.id, { it, first: null, mastered: false }));
   show("quiz"); load();
 }
@@ -801,12 +821,14 @@ function progress(){
   $("cnt").textContent = `${mastered}/${Q.items.length}`;
 }
 function load(){
+  if (reviewOn()) closeReview();
   try { speechSynthesis.cancel(); } catch (e) {}
   const q = Q.queue[Q.pos];
   cur = { it: q.it, again: q.again, attempts: 0, hint: false, revealed: false, done: false, buf: [], lock: 0, marks: [] };
   const it = cur.it;
   progress();
-  $("chips").innerHTML = `<span class="chip">${WEEKS[it.w].t}</span>` + (cur.again ? `<span class="chip o">다시 나온 문제</span>` : "");
+  $("chips").innerHTML = `<span class="chip">${WEEKS[it.w].t}</span>` + (cur.again ? `<span class="chip o">다시 나온 문제</span>` : "") + (Q.hist.length ? `<button class="swipe-tip" id="tipPrev">‹ 이전 문제</button>` : "");
+  if ($("tipPrev")) $("tipPrev").onclick = openReview;
   if (it.abbr) {
     $("en").className = "en ab";
     $("en").innerHTML = `<span class="acr">${esc(it.acr)}</span><span class="acr-sub">이 약어의 풀네임은?</span><span class="blanks" id="blanks"></span>`;
@@ -958,6 +980,12 @@ const KB_ROWS = ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm⌫", "↵"];
 document.addEventListener("keydown", e => {
   if (!cur || !$("quiz").classList.contains("on")) return;
   if ($("dlg").classList.contains("on") || $("sheet").classList.contains("on")) return;
+  if (reviewOn()) {
+    if (e.key === "ArrowLeft") reviewOlder();
+    else if (e.key === "ArrowRight" || e.key === "Escape" || e.key === "Enter") { e.preventDefault(); reviewNewer(); }
+    return;
+  }
+  if (e.key === "ArrowLeft" && !e.metaKey) { openReview(); return; }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.key === "Enter") { e.preventDefault(); main(); return; }
   if (cur.done) return;
@@ -1018,6 +1046,7 @@ function finish(kind){
   $("qcard").className = "qcard " + (kind === "ok" ? "ok" : "rv");
   drawBlanks();
   $("blanks").classList.add("pop");
+  Q.hist.push({ it: cur.it, kind, clean, again: cur.again });
   setFoot(true);
   showInfo(cur.it);
   progress();
@@ -1059,9 +1088,13 @@ $("btnReveal").onclick = () => {
   setMsg("정답을 확인했어요. 조금 뒤에 다시 나와요", "rv");
   if (S.speak) speak(fullEn(cur.it));
 };
+const SPK = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 4V6L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>`;
+function infoHTML(it, spkId){
+  return `<div class="term"><b>${it.abbr ? esc(it.acr) + " = " + esc(it.a) : esc(it.a)}</b><button class="spk" id="${spkId}" aria-label="예문 듣기">${SPK}</button></div>${it.abbr ? `<p style="font-weight:700;margin-bottom:6px">${esc(koPlain(it.ko))}</p>` : ""}<p>${esc(it.d)}</p>` + (it.n ? `<div class="note"><h4>헷갈리기 쉬운 포인트</h4><p>${esc(it.n)}</p></div>` : "");
+}
 function showInfo(it){
   const el = $("info");
-  el.innerHTML = `<div class="term"><b>${it.abbr ? esc(it.acr) + " = " + esc(it.a) : esc(it.a)}</b><button class="spk" id="spkBtn" aria-label="예문 듣기"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 4V6L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg></button></div>${it.abbr ? `<p style="font-weight:700;margin-bottom:6px">${esc(koPlain(it.ko))}</p>` : ""}<p>${esc(it.d)}</p>` + (it.n ? `<div class="note"><h4>헷갈리기 쉬운 포인트</h4><p>${esc(it.n)}</p></div>` : "");
+  el.innerHTML = infoHTML(it, "spkBtn");
   el.className = "info on";
   $("spkBtn").onclick = e => { e.stopPropagation(); speak(fullEn(it)); };
   setTimeout(() => { const qb = $("qbody"); qb.scrollTo({ top: qb.scrollHeight, behavior: "smooth" }); }, 60);
@@ -1072,6 +1105,61 @@ function next(){
   load();
 }
 
+/* ── swipe review of previous questions ── */
+let RV = -1; // index into Q.hist while reviewing, -1 = closed
+const reviewOn = () => RV >= 0;
+function filledHTML(it, kind){
+  const boxes = it.a.split(" ").map(tok => `<span class="bx">${[...tok].map(ch => `<span class="c${isAN(ch) ? "" : " fx"}">${esc(ch)}</span>`).join("")}</span>`).join("");
+  const bl = `<span class="blanks">${boxes}</span>`;
+  if (it.abbr) return `<p class="en ab"><span class="acr">${esc(it.acr)}</span><span class="acr-sub">이 약어의 풀네임은?</span>${bl}</p>`;
+  const [L, R] = it.en.split("___");
+  return `<p class="en">${esc(L)}${bl}${esc(R || "")}</p>`;
+}
+function renderReview(dir){
+  const h = Q.hist[RV], it = h.it;
+  const res = h.kind === "rv" ? `<span class="chip r">정답 보기</span>` : h.clean ? `<span class="chip g">한 번에 정답</span>` : `<span class="chip o">다시 풀어서 정답</span>`;
+  const b = $("rvBody");
+  b.innerHTML = `<div class="chips"><span class="chip">${WEEKS[it.w].t}</span>${res}</div><div class="qcard ${h.kind === "ok" ? "ok" : "rv"}">${filledHTML(it, h.kind)}<p class="ko">${koHTML(it.ko)}</p></div><div class="info on">${infoHTML(it, "rvSpk")}</div>`;
+  $("rvSpk").onclick = () => speak(fullEn(it));
+  $("rvCnt").textContent = `이전 문제 ${RV + 1} / ${Q.hist.length}`;
+  $("rvPrev").disabled = RV === 0;
+  $("rvNext").textContent = RV >= lastReviewable() ? "현재 문제로 ›" : "다음 문제 ›";
+  b.scrollTop = 0;
+  b.classList.remove("in-l", "in-r"); void b.offsetWidth; if (dir) b.classList.add(dir);
+}
+// if the current question is already answered it is the last history entry and is on screen
+function lastReviewable(){ return Q.hist.length - 1 - (cur && cur.done ? 1 : 0); }
+function openReview(){
+  if (!Q || reviewOn()) return;
+  const last = lastReviewable();
+  if (last < 0) { toast("이전 문제가 없어요"); return; }
+  try { speechSynthesis.cancel(); } catch (e) {}
+  RV = last; renderReview("");
+  $("review").classList.add("on"); $("review").setAttribute("aria-hidden", "false");
+}
+function closeReview(){
+  RV = -1; $("review").classList.remove("on"); $("review").setAttribute("aria-hidden", "true");
+  try { speechSynthesis.cancel(); } catch (e) {}
+}
+function reviewOlder(){ if (RV > 0) { RV--; renderReview("in-l"); } else toast("첫 문제예요"); }
+function reviewNewer(){ if (RV < lastReviewable()) { RV++; renderReview("in-r"); } else closeReview(); }
+$("rvClose").onclick = closeReview;
+$("rvPrev").onclick = reviewOlder;
+$("rvNext").onclick = reviewNewer;
+// left→right swipe = older question, right→left = newer / back to current
+function swipe(el, onRight, onLeft){
+  let sx = 0, sy = 0, st = 0, tracking = false;
+  el.addEventListener("touchstart", e => { if (e.touches.length !== 1) { tracking = false; return; } const p = e.touches[0]; sx = p.clientX; sy = p.clientY; st = Date.now(); tracking = true; }, { passive: true });
+  el.addEventListener("touchend", e => {
+    if (!tracking) return; tracking = false;
+    const p = e.changedTouches[0], dx = p.clientX - sx, dy = p.clientY - sy;
+    if (Date.now() - st > 800 || Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    dx > 0 ? onRight() : onLeft();
+  }, { passive: true });
+}
+swipe($("qbody"), openReview, () => {});
+swipe($("review"), reviewOlder, reviewNewer);
+
 /* quit dialog */
 $("btnQuit").onclick = () => { $("dim").classList.add("on"); $("dlg").classList.add("on") };
 $("dlgNo").onclick = closeOverlays;
@@ -1081,6 +1169,7 @@ function closeOverlays(){ ["dim", "dlg", "sheet"].forEach(id => $(id).classList.
 
 /* ── RESULT ── */
 function results(early){
+  if (reviewOn()) closeReview();
   try { speechSynthesis.cancel(); } catch (e) {}
   const rs = [...Q.res.values()];
   const seen = rs.filter(r => r.first !== null);
