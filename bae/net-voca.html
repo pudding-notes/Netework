@@ -1105,13 +1105,34 @@ function clearErr(){
   $("qcard").classList.remove("bad");
   const m = $("msg"); if (m.classList.contains("bad")) setMsg("", "");
 }
+// end positions (in alphanumeric characters) of each word of the main answer
+function wordEnds(){
+  const ends = []; let k = 0;
+  for (const tok of cur.it.a.split(" ")) { const n = [...tok].filter(isAN).length; if (n) { k += n; ends.push(k); } }
+  return ends;
+}
+function lockWords(){
+  const tg = norm(cur.it.a), v = cur.buf.join("");
+  for (const e of wordEnds()) {
+    if (e <= cur.lock) continue;
+    if (v.length < e || v.slice(0, e) !== tg.slice(0, e)) break;
+    for (let i = cur.lock; i < e; i++) cur.marks[i] = cur.marks[i] || "k";
+    cur.lock = e;
+  }
+}
+// how many whole words from the start are correct in v
+function correctWordPrefix(v){
+  const tg = norm(cur.it.a); let keep = 0, words = 0;
+  for (const e of wordEnds()) { if (v.length >= e && v.slice(0, e) === tg.slice(0, e)) { keep = e; words++; } else break; }
+  return { keep, words };
+}
 function typeKey(ch){
   if (!cur || cur.done) return;
   if (cur.buf.length >= capLen()) { shake(); return; }
   const c = ch.toLowerCase(), i = cur.buf.length, tg = norm(cur.it.a);
   cur.buf.push(c);
-  // live grading: a letter that continues the correct prefix turns green and stays
-  if (i === cur.lock && tg[i] === c) { cur.marks[i] = cur.marks[i] || "k"; cur.lock = i + 1; }
+  // live grading by word: once a whole word is typed correctly (and everything before it is correct), it turns green and stays
+  lockWords();
   clearErr(); drawBlanks(); readyState();
   // whole answer typed correctly → grade without pressing 확인
   const v = cur.buf.join("");
@@ -1233,23 +1254,23 @@ function main(){
   if (isMatch(v, cur.it)) return correct();
   cur.attempts++; Q.streak = 0;
   const t = norm(cur.it.a);
-  let p = 0; while (p < v.length && p < t.length && v[p] === t[p]) p++;
   const d = lev(v, t);
   const close = d > 0 && d <= (t.length >= 7 ? 2 : 1);
-  // keep only the correct prefix, lock and color it
-  for (let i = cur.lock; i < p; i++) cur.marks[i] = cur.marks[i] || "k";
-  cur.lock = Math.max(cur.lock, p);
-  const hadWrong = v.length > p;
+  // keep only whole words that are correct from the start (plus hint letters); the rest is cleared
+  const cw = correctWordPrefix(v);
+  const keep = Math.max(cur.lock, cw.keep);
+  const hadWrong = v.length > keep;
+  const multi = wordEnds().length > 1;
   let m;
   if (close) m = "아깝다! 철자를 다시 확인해 보세요";
-  else if (p > 0) m = `앞 ${p}글자는 맞았어요. 이어서 입력해 보세요`;
+  else if (multi && cw.words > 0) m = `앞 ${cw.words}단어는 맞았어요. 이어서 입력해 보세요`;
   else m = "다시 생각해 보세요";
   if (cur.attempts >= 3 && !cur.hint) m += " · 힌트를 써 봐도 좋아요";
-  setMsg(m, close || p > 0 ? "close" : "bad");
+  setMsg(m, close || (multi && cw.words > 0) ? "close" : "bad");
   $("qcard").classList.add("bad"); shake(); sndBad(); buzz(40);
   setTimeout(() => {
     if (!cur || cur.done) return;
-    if (hadWrong) cur.buf = cur.buf.slice(0, p);
+    if (hadWrong) cur.buf = cur.buf.slice(0, keep);
     $("qcard").classList.remove("bad");
     drawBlanks(); readyState();
   }, hadWrong ? 520 : 0);
