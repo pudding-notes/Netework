@@ -326,6 +326,7 @@ const WEEKS = {
   2: { t: "2주차", s: "IP Networking" },
   3: { t: "3주차", s: "TCP · UDP · Socket" },
   4: { t: "4주차", s: "DNS · HTTP · HTTPS" },
+  5: { t: "5주차", s: "Web · REST API" },
   6: { t: "6주차", s: "Auth · Web Security" },
   7: { t: "7주차", s: "Realtime · IoT" },
   9: { t: "9주차", s: "Cloud Networking" }
@@ -435,6 +436,49 @@ const DATA = [
   { w: 4, a: "CORS", en: "When the browser refuses to share a response from another origin, it shows a ___ error.", ko: "다른 출처의 응답 공유를 브라우저가 거부하면 [교차 출처 리소스 공유] 오류가 뜬다.", d: "Cross-Origin Resource Sharing. 서버가 Access-Control-Allow-Origin으로 허용해야 한다.", n: "CORS 오류는 서버가 이미 응답을 보낸 뒤 '브라우저가' 막은 것이다." },
   { w: 4, a: "Mixed Content", alt: ["mixed content"], en: "Calling an http:// API from an HTTPS page is blocked as ___.", ko: "HTTPS 페이지 안에서 http:// API를 부르면 [혼합 콘텐츠]로 차단된다.", d: "HTTPS 페이지 안의 HTTP 요청을 브라우저가 차단하는 것.", n: "모든 리소스·API를 HTTPS로 바꿔야 한다." },
 
+  // ───────── Week 5 ─────────
+  { w: 5, a: "resource", en: "In REST, a ___ is anything you can name with a URI, such as a student, a course, or an order.", ko: "REST에서 [URI로 이름 붙일 수 있는 대상]은 학생·수업·주문처럼 무엇이든 될 수 있다.", d: "URI 하나가 자원 하나를 가리킨다(/students/10). URI는 명사, Method는 동사.", n: "Representation(표현)은 자원의 특정 시점 상태를 JSON 등으로 나타낸 것 — 우리가 실제로 주고받는 것은 표현이다." },
+  { w: 5, a: "representation", en: "A client never receives the student itself, only a JSON ___ of its current state.", ko: "클라이언트는 학생 자체가 아니라 현재 상태를 담은 JSON [표현]만 받는다.", d: "자원의 특정 시점 상태를 나타낸 것. 같은 자원도 JSON·CSV·HTML 등 여러 표현이 가능.", n: "표현 ≠ DB 테이블: password_hash 같은 컬럼은 응답 표현에 넣지 않는다. REST = REpresentational State Transfer." },
+  { w: 5, a: "Uniform Interface", alt: ["uniform interface"], en: "___ is REST's core constraint: identify resources with URIs and manipulate them with standard methods.", ko: "[일관된 인터페이스]는 REST의 핵심 제약으로, URI로 자원을 식별하고 표준 메서드로 조작한다.", d: "자원 식별 · 표현을 통한 조작 · 자기 서술적 메시지 · HATEOAS.", n: "REST 6제약: Client-Server · Stateless · Cacheable · Uniform Interface · Layered System · Code on Demand(선택)." },
+  { w: 5, a: "Layered System", alt: ["layered system", "layered"], en: "Under the ___ constraint, a client doesn't need to know whether a CDN or load balancer sits in between.", ko: "[계층화 시스템] 제약에서는 클라이언트가 중간에 CDN·LB가 있는지 몰라도 된다.", d: "REST 제약 중 하나. 깨지면 프록시 하나 추가하는 데 클라이언트 수정이 필요해진다." },
+  { w: 5, a: "Code on Demand", alt: ["code on demand"], en: "___ is the only optional REST constraint: the server may send executable JavaScript.", ko: "[주문형 코드]는 REST 제약 중 유일한 선택 사항으로, 서버가 실행 코드를 내려보낼 수 있다는 것이다.", d: "없어도 REST다." },
+  { w: 5, a: "Richardson Maturity Model", alt: ["Richardson"], en: "The ___ grades an API from Level 0 to Level 3 by how RESTful it is.", ko: "[리처드슨 성숙도 모델]은 API가 얼마나 REST다운지를 Level 0~3으로 매긴다.", d: "L0 POST 하나로 모든 일 · L1 자원별 URI · L2 HTTP 메서드+상태 코드(실무 표준) · L3 HATEOAS.", n: "항상 200 + {\"success\": false}를 보내는 API는 Level 2를 넘지 못한다." },
+  { w: 5, a: "content negotiation", en: "With ___, the client asks for a format with Accept and the server answers with Content-Type.", ko: "[콘텐츠 협상]에서는 클라이언트가 Accept로 원하는 형식을 말하고 서버가 Content-Type으로 실제 형식을 알린다.", d: "같은 URI, 다른 표현. 지원하지 않으면 406 Not Acceptable.", n: "URI에 확장자(/students/10.json)를 붙이지 말고 헤더로 협상한다." },
+  { w: 5, a: "collection", en: "/students is a ___, and /students/10 is a single item inside it.", ko: "/students는 [여러 자원의 묶음]이고 /students/10은 그 안의 단일 자원이다.", d: "복수형 명사로 쓴다. 컬렉션 → 원소 구조가 일관된다.", n: "/students/10/enrollments처럼 자원 아래의 자원은 sub-resource. 중첩은 2단계 이내." },
+  { w: 5, a: "Location", en: "After a successful POST, return 201 Created with a ___ header pointing to the new resource.", ko: "POST에 성공하면 201 Created와 함께 [새 자원의 주소] 헤더를 돌려준다.", d: "새 id는 서버가 정한다 → 클라이언트가 바로 GET할 수 있게 주소를 알려 준다.", n: "cross-origin이면 Access-Control-Expose-Headers에 Location을 넣어야 JS가 읽을 수 있다." },
+  { w: 5, a: "PATCH", en: "Use ___ to change only the fields you send, leaving the others as they are.", ko: "보낸 필드만 바꾸고 나머지는 그대로 두려면 [부분 수정 메서드]를 쓴다.", d: "부분 수정. 형식에 따라 멱등 여부가 다르다(Merge Patch는 사실상 멱등, '+1' 같은 연산은 비멱등).", n: "PUT은 전체 교체 — 빠진 필드는 삭제/기본값으로 간주된다." },
+  { w: 5, a: "PUT", en: "___ replaces the whole resource, so any field you leave out becomes null.", ko: "[전체 교체 메서드]는 자원을 통째로 바꾸기 때문에 빠뜨린 필드는 null이 된다.", d: "Body = 자원의 완전한 새 표현. 항상 멱등.", n: "PUT 핸들러가 부분 수정처럼 동작하면 계약 위반이다." },
+  { w: 5, a: "Created", en: "201 ___ tells the client that a new resource was made.", ko: "201 [생성됨]은 새 자원이 만들어졌다는 뜻이다.", d: "생성 성공 + Location 헤더.", n: "200 OK: 조회·수정 성공 / 204 No Content: 삭제 성공, Body 없음." },
+  { w: 5, a: "Accepted", en: "202 ___ means the request was queued for later, like an AI inference job.", ko: "202 [접수됨]은 요청이 나중에 처리되도록 큐에 들어갔다는 뜻이다(AI 추론 작업 등).", d: "비동기 작업. 완료는 Polling 등으로 확인.", n: "작업 완료 확인은 Polling이 '정답'인 대표적인 경우다(7주차)." },
+  { w: 5, a: "No Content", en: "A successful DELETE usually returns 204 ___.", ko: "삭제에 성공하면 보통 204 [본문 없음]을 돌려준다.", d: "성공했지만 돌려줄 Body가 없음.", n: "삭제 후 다시 GET하면 404. 같은 DELETE를 또 보내도 상태는 '없음' 그대로 → 멱등." },
+  { w: 5, a: "Conflict", en: "Registering a student number that already exists should return 409 ___.", ko: "이미 등록된 학번으로 또 등록하면 409 [충돌]을 돌려줘야 한다.", d: "요청이 현재 자원 상태와 충돌.", n: "4xx는 요청을 보낸 쪽이 고칠 일, 5xx는 서버가 고칠 일." },
+  { w: 5, a: "Unprocessable Content", alt: ["Unprocessable Entity"], en: "When the JSON is valid but grade is 7, FastAPI returns 422 ___.", ko: "JSON 문법은 맞지만 grade가 7이면 FastAPI는 422 [처리할 수 없는 내용]을 돌려준다.", d: "문법은 맞지만 값이 규칙 위반(타입·범위·필수 누락). 422면 handler 코드는 실행조차 안 됐다.", n: "400은 JSON 자체가 깨졌거나 해석 불가. 예전 이름은 Unprocessable Entity." },
+  { w: 5, a: "Method Not Allowed", en: "If the path exists but there is no handler for that method, the server returns 405 ___.", ko: "경로는 있는데 그 메서드의 handler가 없으면 405 [허용되지 않은 메서드]를 돌려준다.", d: "응답의 Allow 헤더로 허용 메서드를 확인.", n: "404는 경로 자체가 없음." },
+  { w: 5, a: "Problem Details", alt: ["problem details"], en: "RFC 9457 ___ standardizes error bodies with type, title, status, detail, and instance.", ko: "RFC 9457 [표준 오류 응답 형식]은 type·title·status·detail·instance로 오류 Body를 표준화한다.", d: "Content-Type: application/problem+json. 모든 endpoint가 같은 오류 구조 → 프론트는 파서 하나로 처리.", n: "Stack trace · SQL 문 · 내부 경로는 오류 응답에 절대 넣지 않는다." },
+  { w: 5, a: "schema", en: "A JSON ___ defines the structure, types, and limits the data must follow.", ko: "JSON [데이터 구조 규칙]은 데이터가 따라야 할 구조·타입·제약을 정의한다.", d: "실행 가능한 계약. 요청 Schema와 응답 Schema를 분리한다.", n: "JSON에는 날짜 타입이 없다 → ISO 8601 문자열. 64-bit ID는 JS 정밀도 때문에 문자열로 보내기도 한다." },
+  { w: 5, a: "Pydantic", en: "In FastAPI, a ___ model validates input, filters output, and generates the OpenAPI document at once.", ko: "FastAPI에서 [파이썬 데이터 검증 라이브러리] 모델 하나로 입력 검증·출력 필터링·OpenAPI 문서 생성이 동시에 된다.", d: "BaseModel + Field(ge=1, le=4) 같은 제약. 검증 실패 시 422.", n: "\"3\" 같은 문자열 숫자는 3으로 변환해 통과시킨다." },
+  { w: 5, a: "response_model", alt: ["response model"], en: "Setting ___ = StudentOut filters out fields like password_hash from the response.", ko: "[응답 모델]을 StudentOut으로 지정하면 password_hash 같은 필드가 응답에서 걸러진다.", d: "나가는 데이터도 검증한다. 모델과 맞지 않으면 500.", n: "입력 검증만큼 출력 필터링이 중요하다." },
+  { w: 5, a: "path parameter", en: "In /v1/students/{sid}, sid is a ___ that identifies which resource.", ko: "/v1/students/{sid}에서 sid는 어떤 자원인지 식별하는 [경로 매개변수]다.", d: "FastAPI에서 sid: int로 받으면 타입 자동 변환·검증.", n: "경로 = 무엇을(식별), 쿼리 = 어떤 조건으로(필터·정렬·페이지), 헤더 = 어떤 형식·권한으로." },
+  { w: 5, a: "middleware", en: "CORS ___ answers the OPTIONS preflight before the request ever reaches the router.", ko: "CORS [요청 전처리 계층]은 요청이 라우터에 닿기 전에 OPTIONS Preflight에 응답한다.", d: "Uvicorn → Middleware(CORS·로깅·인증·압축) → Router → Validation → Handler.", n: "그래서 OPTIONS용 handler를 따로 만들 필요가 없다." },
+  { w: 5, a: "pagination", en: "Without ___, GET /students might return a hundred thousand rows at once.", ko: "[페이지 나누기]가 없으면 GET /students가 10만 건을 한 번에 돌려줄 수 있다.", d: "offset·cursor 방식. 서버는 limit 최대값(예: 100)을 강제해야 한다.", n: "클라이언트는 응답의 next 링크를 그대로 호출하고, next가 null이면 끝." },
+  { w: 5, a: "cursor", en: "With ___ pagination, the server uses WHERE id > 40 like a bookmark, so deep pages stay fast.", ko: "[책갈피 방식] 페이지네이션은 WHERE id > 40처럼 마지막 위치부터 읽어 깊은 페이지도 빠르다.", d: "Keyset 방식. 인덱스로 바로 점프, 새 글이 추가돼도 중복·누락 없음. 임의 페이지 점프는 불가.", n: "Offset: 앞의 N개를 세고 버림 → 뒤로 갈수록 느려지고, 중간 삽입 시 중복·누락." },
+  { w: 5, a: "offset", en: "With ___ pagination, the server counts and skips the first 40 rows every time.", ko: "[건너뛸 개수 방식] 페이지네이션은 매번 앞의 40개를 세고 버린다.", d: "?offset=40&limit=20. 구현 쉽고 '7페이지로 이동' 가능. 관리자 화면·작은 테이블에 적합.", n: "무한 스크롤 피드·센서 로그·채팅 기록에는 cursor." },
+  { w: 5, a: "breaking change", en: "Renaming grade to year is a ___ that needs a new API version.", ko: "grade를 year로 이름을 바꾸는 것은 새 API 버전이 필요한 [호환 깨짐 변경]이다.", d: "필드 이름 변경·삭제, 타입 변경, 선택 → 필수 변경, URI·상태 코드·오류 형식 변경.", n: "호환 유지: 새 필드·선택 필드·새 endpoint 추가." },
+  { w: 5, a: "Tolerant Reader", alt: ["tolerant reader"], en: "Under the ___ principle, clients ignore fields they don't know, so servers can add fields freely.", ko: "[관대한 독자] 원칙에서는 클라이언트가 모르는 필드를 무시해서 서버가 필드를 자유롭게 추가할 수 있다.", d: "대부분의 변경을 버전 없이 배포할 수 있게 해 준다." },
+  { w: 5, a: "OpenAPI", en: "___ is the standard for describing a REST API in YAML or JSON.", ko: "[REST API 명세 표준]은 REST API를 YAML이나 JSON으로 기술한다.", d: "FastAPI는 /openapi.json을 자동 생성. Codegen·LLM Function calling 정의로도 쓴다.", n: "Swagger = 도구 이름, OpenAPI = 명세 표준 이름." },
+  { w: 5, a: "Swagger UI", alt: ["swagger"], en: "Open /docs to try every endpoint in the browser through ___.", ko: "/docs를 열면 [API 문서·테스트 화면]에서 브라우저로 모든 endpoint를 실행해 볼 수 있다.", d: "Try it out → 값 입력 → Execute → 상태 코드·헤더·Body·curl 명령 확인.", n: "같은 Origin이라 CORS가 없다 → 'Swagger에선 되는데 내 프론트에선 안 돼요'의 원인." },
+  { w: 5, a: "design-first", alt: ["design first"], en: "In ___ development, teams agree on the API spec before writing any code.", ko: "[명세 먼저] 방식에서는 코드를 쓰기 전에 팀끼리 API 명세부터 합의한다.", d: "대규모 협업에 유리.", n: "Code-first: 코드 → 명세(FastAPI 방식). 빠르지만 구현에 끌려가기 쉽다." },
+  { w: 5, a: "sticky session", en: "If the server keeps the current page in memory, the load balancer needs a ___ to send you to the same server.", ko: "서버 메모리에 현재 페이지를 기억하면 LB가 항상 같은 서버로 보내는 [고정 세션]이 필요하다.", d: "Stateful 설계의 부작용. 그 서버가 죽으면 상태도 사라진다.", n: "해결: 커서·토큰을 요청에 담고(Stateless), 공유 상태는 DB·Redis로." },
+  { w: 5, a: "Same-Origin Policy", alt: ["same origin policy", "SOP"], en: "The ___ stops page JavaScript from reading responses from a different origin.", ko: "[동일 출처 정책]은 페이지의 JavaScript가 다른 출처의 응답을 읽지 못하게 막는다.", d: "Origin = scheme + host + port. '보내기'는 되고 '읽기'가 막힌다.", n: "localhost와 127.0.0.1은 같은 컴퓨터지만 다른 Origin. CORS는 이 금지를 서버가 풀어 주는 예외 규칙." },
+  { w: 5, a: "preflight", en: "Before a cross-origin PATCH with JSON, the browser sends an OPTIONS ___ request.", ko: "JSON을 담은 cross-origin PATCH를 보내기 전에 브라우저는 OPTIONS [사전 확인] 요청을 보낸다.", d: "Access-Control-Request-Method/-Headers로 묻고, 서버가 Allow-* 헤더로 허락.", n: "Preflight가 실패하면(404·405·401·리다이렉트) 실제 요청은 아예 전송되지 않는다." },
+  { w: 5, a: "simple request", en: "A plain GET with no custom headers is a ___, so no OPTIONS is sent first.", ko: "커스텀 헤더 없는 평범한 GET은 [단순 요청]이라 OPTIONS를 먼저 보내지 않는다.", d: "GET·HEAD·POST + 안전한 Content-Type(text/plain, form-urlencoded, multipart) + 안전 헤더만.", n: "application/json, Authorization 헤더, PUT·PATCH·DELETE 중 하나라도 있으면 Preflight." },
+  { w: 5, a: "Access-Control-Allow-Origin", en: "If the response lacks ___, the browser hides it from JavaScript even when the status is 200.", ko: "응답에 [읽기 허용 출처] 헤더가 없으면 상태가 200이어도 브라우저가 JS에게 응답을 넘겨주지 않는다.", d: "읽기를 허용할 Origin(하나 또는 *).", n: "CORS 오류여도 서버는 이미 요청을 처리했을 수 있다 — Network 탭에 200이 찍히는 경우가 많다." },
+  { w: 5, a: "Access-Control-Max-Age", alt: ["max-age", "Max-Age"], en: "With ___: 600, the browser reuses the preflight result for ten minutes.", ko: "[사전 확인 결과 캐시 시간]을 600으로 두면 브라우저가 10분 동안 Preflight 결과를 재사용한다.", d: "그동안은 OPTIONS를 다시 보내지 않아 RTT 한 번을 아낀다. 브라우저마다 상한이 있다." },
+  { w: 5, a: "Access-Control-Expose-Headers", alt: ["expose headers", "Expose-Headers"], en: "Unless Location is listed in ___, r.headers.get('Location') returns null in JavaScript.", ko: "Location을 [JS가 읽을 수 있는 응답 헤더 목록]에 넣지 않으면 JS에서 r.headers.get('Location')이 null이다.", d: "기본으로 노출되지 않는 응답 헤더를 JS에 공개.", n: "FastAPI: expose_headers=[\"Location\"]." },
+  { w: 5, a: "Vary", en: "Sending ___: Origin keeps a CDN from serving one site's CORS response to another site.", ko: "[응답이 달라지는 기준] 헤더를 Origin으로 보내면 CDN이 A 사이트용 응답을 B 사이트에 주지 않는다.", d: "Origin별로 응답이 다르다는 표시 → 캐시 분리." },
+  { w: 5, a: "credentials", en: "When a request includes ___ such as cookies, Access-Control-Allow-Origin cannot be *.", ko: "쿠키 같은 [인증 정보]를 포함한 요청에는 Access-Control-Allow-Origin을 *로 둘 수 없다.", d: "Access-Control-Allow-Credentials: true + 명시적 Origin 목록.", n: "* + credentials를 피하려고 요청 Origin을 그대로 반사하면 사실상 '모든 사이트 + 쿠키 허용' → 위험." },
+  { w: 5, a: "reverse proxy", en: "Serving / and /api from the same domain through a ___ removes the need for CORS.", ko: "[앞단에서 요청을 나눠 주는 프록시]로 /와 /api를 같은 도메인에서 서비스하면 CORS 설정이 필요 없어진다.", d: "Nginx: location /api/ { proxy_pass http://api:8000/; }. 운영에서 가장 깔끔.", n: "개발 서버 proxy(Vite)는 개발 편의용 — 배포 환경과 다를 수 있다." },
+  { w: 5, a: "GraphQL", en: "With ___, the client picks exactly which fields it wants in a single query.", ko: "[클라이언트가 필드를 골라 묻는 API 스타일]에서는 쿼리 하나로 원하는 필드만 정확히 고른다.", d: "Over/Under-fetching 해결. 대신 HTTP 캐시가 어렵고 복잡도가 높다.", n: "REST: 공개 API·CRUD / gRPC: 내부 서비스 간 고속 호출 / WebSocket·SSE: 서버 Push." },
   // ───────── Week 6 ─────────
   { w: 6, a: "authentication", alt: ["AuthN"], en: "___ answers the question 'Who are you?'", ko: "[인증]은 '당신은 누구인가?'라는 질문에 답한다.", d: "사용자의 신원을 확인하는 것(비밀번호·OTP·지문). 실패 시 401.", n: "Authentication(누구인가, 401) → Authorization(해도 되는가, 403) 순서. 인증은 로그인 때 한 번, 인가는 요청마다." },
   { w: 6, a: "authorization", alt: ["AuthZ"], en: "___ answers the question 'What are you allowed to do?'", ko: "[인가]는 '당신은 무엇을 해도 되는가?'라는 질문에 답한다.", d: "권한을 확인하는 것(역할·소유권·scope). 실패 시 403.", n: "다시 로그인해도 해결되지 않는다 — 권한 자체가 없기 때문." },
@@ -718,6 +762,24 @@ const ABBR_RAW = [
   [4, "Alt-Svc", "Alternative Service", "대체 서비스", "Alt-Svc: h3=\":443\" — 다음부터 HTTP/3(UDP 443)를 시도하라는 광고.", ["Alternative Services"]],
   [4, "SSL", "Secure Sockets Layer", "보안 소켓 계층", "TLS의 전신. 'SSL 인증서', 'SSL Strip'처럼 이름이 남아 있다.", ["Secure Socket Layer"]],
 
+  // ───────── Week 5 ─────────
+  [5, "CRUD", "Create Read Update Delete", "생성·조회·수정·삭제", "POST · GET · PUT/PATCH · DELETE로 매핑. 성공 응답 201 · 200 · 200/204 · 204."],
+  [5, "HATEOAS", "Hypermedia as the Engine of Application State", "애플리케이션 상태의 엔진으로서의 하이퍼미디어", "응답 안에 다음 행동 링크를 포함. Richardson Level 3. 실무 API는 보통 생략.", ["Hypermedia as the Engine of Application State"]],
+  [5, "SOP", "Same-Origin Policy", "동일 출처 정책", "다른 Origin의 응답을 JS가 읽는 것을 막는 브라우저 규칙. CORS는 그 예외.", ["Same Origin Policy"]],
+  [5, "SSR", "Server-Side Rendering", "서버 측 렌더링", "서버가 완성된 HTML을 응답(PHP·JSP·Django Template). SPA + REST API와 대비.", ["Server Side Rendering"]],
+  [5, "ASGI", "Asynchronous Server Gateway Interface", "비동기 서버 게이트웨이 인터페이스", "Uvicorn 같은 ASGI 서버가 TCP 8000을 받아 HTTP를 파싱하고 FastAPI에 넘긴다."],
+  [5, "POX", "Plain Old XML", "평범한 XML", "Richardson Level 0 'The Swamp of POX' — URI 하나, POST 하나로 모든 일."],
+  [5, "XML", "Extensible Markup Language", "확장 가능한 마크업 언어", "태그 기반 데이터 형식. 지금 REST API는 대부분 JSON.", ["eXtensible Markup Language"]],
+  [5, "YAML", "YAML Ain't Markup Language", "YAML은 마크업 언어가 아니다(재귀 약어)", "OpenAPI 명세를 쓰는 형식(openapi.yaml). 들여쓰기로 구조를 표현.", ["Yet Another Markup Language"]],
+  [5, "OAS", "OpenAPI Specification", "OpenAPI 명세", "Swagger UI의 'OAS 3.1' 표시. REST API 명세 표준."],
+  [5, "XHR", "XMLHttpRequest", "XML HTTP 요청(브라우저 API)", "fetch 이전의 브라우저 HTTP API. fetch/XHR로 받은 cross-origin 응답을 읽는 것이 SOP 대상.", ["XML HTTP Request"]],
+  [5, "CSV", "Comma-Separated Values", "쉼표로 구분된 값", "Content Negotiation 예: Accept: text/csv → id,name,grade.", ["Comma Separated Values"]],
+  [5, "ISO", "International Organization for Standardization", "국제 표준화 기구", "JSON에는 날짜 타입이 없다 → ISO 8601 문자열 '2026-10-16T09:00:00+09:00'."],
+  [5, "PHP", "PHP: Hypertext Preprocessor", "PHP 하이퍼텍스트 전처리기(재귀 약어)", "SSR 시대의 대표 서버 언어.", ["PHP Hypertext Preprocessor", "Hypertext Preprocessor", "Personal Home Page"]],
+  [5, "JSP", "JavaServer Pages", "자바 서버 페이지", "SSR 방식의 Java 템플릿 기술.", ["Java Server Pages"]],
+  [5, "UI", "User Interface", "사용자 인터페이스", "Client-Server 제약: UI와 데이터 저장을 분리해 각자 독립적으로 진화."],
+  [5, "TS", "TypeScript", "타입스크립트", "OpenAPI 명세로 TS·Kotlin 클라이언트 코드를 자동 생성(Codegen).", ["Type Script"]],
+  [5, "gRPC", "gRPC Remote Procedure Calls", "gRPC 원격 프로시저 호출(재귀 약어)", "HTTP/2 + Protobuf 기반 RPC. 마이크로서비스 내부 고속 호출.", ["Google Remote Procedure Call", "Google RPC"]],
   // ───────── Week 6 ─────────
   [6, "MITM", "Man In The Middle", "중간자", "중간에 끼어들어 엿보거나 바꾸는 공격. 인증서 검증으로 막는다.", ["Man-in-the-Middle"]],
   [6, "XSS", "Cross-Site Scripting", "교차 사이트 스크립팅", "입력한 글이 스크립트로 실행되는 공격. 출력 이스케이프·CSP로 방어.", [], "CSS(스타일 시트)와 겹치지 않게 X를 쓴다."],
@@ -860,12 +922,14 @@ const label = it => it.abbr ? it.acr : it.a;
 
 /* ── storage (best effort) ── */
 const KEY = "netvoca.v1";
-let S = { mode: "term", weeks: [1,2,3,4,6,7,9], count: 20, hide: false, sound: true, speak: true, wrong: [], mastered: [] };
+let S = { mode: "term", weeks: [1,2,3,4,5,6,7,9], count: 20, hide: false, sound: true, speak: true, wrong: [], mastered: [] };
 let savedWv = 2;
 try { const raw = localStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); savedWv = o.wv || 1; S = Object.assign(S, o); } } catch (e) {}
-// weeks 7 and 9 were added later: select them once for people who saved a selection before that
-if (savedWv < 2) { S.weeks = [...new Set(S.weeks.concat([7, 9]))].sort((a, b) => a - b); }
-S.wv = 2;
+// weeks added later (7·9, then 5): select them once for people who saved a selection before that
+if (savedWv < 2) S.weeks = S.weeks.concat([7, 9]);
+if (savedWv < 3) S.weeks = S.weeks.concat([5]);
+S.weeks = [...new Set(S.weeks)].sort((a, b) => a - b);
+S.wv = 3;
 S.wrong = S.wrong.filter(id => BY_ID.has(id)); S.mastered = S.mastered.filter(id => BY_ID.has(id));
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
