@@ -1573,9 +1573,11 @@ function correct(){
   if (S.speak) speak(fullEn(cur.it));
 }
 $("btnHint").onclick = () => {
-  if (!cur || cur.done || cur.hint) return;
+  if (!cur || cur.done) return;
   const t = [...norm(cur.it.a)];
-  const from = cur.lock;
+  // start after whatever is already correct from the front (locked or just typed)
+  let from = cur.lock;
+  while (from < cur.buf.length && from < t.length && cur.buf[from] === t[from]) from++;
   let to;
   if (cur.it.abbr) {
     // fill up to the end of the word the cursor is in
@@ -1585,13 +1587,14 @@ $("btnHint").onclick = () => {
     to = Math.min(t.length, from + (t.length >= 6 ? 2 : 1));
   }
   if (to >= t.length) to = Math.max(from, t.length - 1); // never fill the whole answer
-  if (to <= from) { toast("더 줄 힌트가 없어요"); return; }
+  if (to <= from) { toast("마지막 글자는 직접 입력해 보세요"); return; }
   cur.hint = true;
+  cur.hints = (cur.hints || 0) + 1;
   cur.buf = t.slice(0, to);
   for (let i = from; i < to; i++) cur.marks[i] = "h";
   cur.lock = to;
-  $("btnHint").disabled = true;
-  setMsg(`${to - from}글자를 채워 드렸어요`, "close");
+  lockWords();
+  setMsg(`힌트 ${cur.hints}번째 · ${to - from}글자를 채워 드렸어요`, "close");
   clearErr(); drawBlanks(); readyState(); sndHint();
 };
 $("btnReveal").onclick = () => {
