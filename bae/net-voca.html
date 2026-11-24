@@ -1597,7 +1597,9 @@ function finish(kind){
   const clean = kind === "ok" && cur.attempts === 0 && !cur.hint;
   if (r.first === null) r.first = clean;
   if (clean) r.mastered = true;
-  else Q.queue.splice(Math.min(Q.pos + 4, Q.queue.length), 0, { it: cur.it, again: true });
+  // only questions solved with help (hint / reveal) come back — at the very end of the session
+  cur.requeued = cur.hint || kind !== "ok";
+  if (cur.requeued) Q.queue.push({ it: cur.it, again: true });
   $("qcard").className = "qcard " + (kind === "ok" ? "ok" : "rv");
   drawBlanks();
   $("blanks").classList.add("pop");
@@ -1610,7 +1612,8 @@ function finish(kind){
 function correct(){
   const clean = finish("ok");
   if (clean) { Q.streak++; setMsg(Q.streak >= 3 ? `정답! ${Q.streak}연속 🔥` : "정답!", "ok"); }
-  else setMsg("정답! 이 문제는 조금 뒤에 한 번 더 나와요", "ok");
+  else if (cur.requeued) setMsg("정답! 힌트를 썼으니 마지막에 한 번 더 나와요", "ok");
+  else { Q.streak = 0; setMsg("정답!", "ok"); }
   sndOk(); buzz(15);
   if (S.speak) speak(fullEn(cur.it));
 }
@@ -1643,7 +1646,7 @@ $("btnReveal").onclick = () => {
   if (!cur || cur.done) return;
   cur.revealed = true; Q.streak = 0;
   finish("rv");
-  setMsg("정답을 확인했어요. 조금 뒤에 다시 나와요", "rv");
+  setMsg("정답을 확인했어요. 마지막에 한 번 더 나와요", "rv");
   if (S.speak) speak(fullEn(cur.it));
 };
 const SPK = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 4V6L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>`;
