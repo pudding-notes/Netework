@@ -1098,6 +1098,7 @@ function drawBlanks(){
 function setMsg(t, cls){ const m = $("msg"); m.textContent = t; m.className = "msg " + (cls || ""); }
 function setFoot(done){
   $("tools").hidden = done; $("kb").hidden = done; $("btnNext").hidden = !done;
+  if (!done && $("kb").invalidate) $("kb").invalidate();
   if (done) $("btnNext").textContent = Q.pos + 1 >= Q.queue.length ? "결과 보기" : "다음 문제";
 }
 function readyState(){ const e = $("kEnter"); if (e) e.classList.toggle("ready", cur && cur.buf.length > cur.lock); }
@@ -1161,12 +1162,18 @@ const KB_ROWS = ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm⌫", "↵"];
     });
     kb.appendChild(r);
   });
-  // ── touch handling: no dead zones, commit on release, slide to change key ──
-  const keys = () => [...kb.querySelectorAll(".key")];
+  // ── touch handling: input on press (no wait for release), no dead zones ──
+  // key positions are measured once and reused until the layout changes
+  let rects = null;
+  const measure = () => { rects = [...kb.querySelectorAll(".key")].map(k => ({ k, r: k.getBoundingClientRect() })); };
+  const invalidate = () => { rects = null; };
+  window.addEventListener("resize", invalidate);
+  if (window.visualViewport) visualViewport.addEventListener("resize", invalidate);
+  kb.invalidate = invalidate;
   function nearest(x, y){
+    if (!rects || !rects.length || !rects[0].r.width) measure();
     let best = null, bd = Infinity;
-    for (const k of keys()) {
-      const r = k.getBoundingClientRect();
+    for (const { k, r } of rects) {
       const dx = x < r.left ? r.left - x : x > r.right ? x - r.right : 0;
       const dy = y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0;
       const d = dx * dx + dy * dy * 1.6; // rows are farther apart than keys: weigh vertical distance more
@@ -1174,43 +1181,27 @@ const KB_ROWS = ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm⌫", "↵"];
     }
     return best;
   }
-  const active = new Map(); // pointerId -> { key, rep, repT, fired }
-  function stopRepeat(s){ clearTimeout(s.repT); clearInterval(s.rep); s.repT = s.rep = null; }
-  function setKey(s, k){
-    if (s.key === k) return;
-    if (s.key) s.key.classList.remove("pr");
-    stopRepeat(s);
-    s.key = k; s.fired = false;
-    if (!k) return;
-    k.classList.add("pr");
-    if (k.dataset.k === "BS") s.repT = setTimeout(() => { s.fired = true; backspace(); s.rep = setInterval(backspace, 70); }, 420);
-  }
+  const active = new Map(); // pointerId -> { key, rep, repT }
   kb.addEventListener("pointerdown", e => {
     e.preventDefault();
     try { kb.setPointerCapture(e.pointerId); } catch (err) {}
-    const s = { key: null, rep: null, repT: null, fired: false };
+    const k = nearest(e.clientX, e.clientY); if (!k) return;
+    const s = { key: k, rep: null, repT: null };
     active.set(e.pointerId, s);
-    setKey(s, nearest(e.clientX, e.clientY));
-  });
-  kb.addEventListener("pointermove", e => {
-    const s = active.get(e.pointerId); if (!s) return;
-    if (s.fired) return; // backspace is already repeating: keep it until release
-    setKey(s, nearest(e.clientX, e.clientY));
-  });
-  function end(e, commit){
-    const s = active.get(e.pointerId); if (!s) return;
-    active.delete(e.pointerId);
-    const k = s.key, fired = s.fired;
-    setKey(s, null);
-    if (!commit || !k || fired) return;
+    k.classList.add("pr");
     const v = k.dataset.k;
-    if (v === "BS") backspace();
+    // act immediately on touch-down; each finger is handled in the order it lands
+    if (v === "BS") { backspace(); s.repT = setTimeout(() => { s.rep = setInterval(backspace, 70); }, 420); }
     else if (v === "EN") main();
     else typeKey(v);
+  });
+  function release(e){
+    const s = active.get(e.pointerId); if (!s) return;
+    active.delete(e.pointerId);
+    clearTimeout(s.repT); clearInterval(s.rep);
+    s.key.classList.remove("pr");
   }
-  kb.addEventListener("pointerup", e => end(e, true));
-  kb.addEventListener("pointercancel", e => end(e, false));
-  kb.addEventListener("lostpointercapture", e => end(e, false));
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => kb.addEventListener(ev, release));
   // keep the browser / host app from treating keyboard touches as scroll or pull-down
   ["touchstart", "touchmove"].forEach(ev => kb.addEventListener(ev, e => e.preventDefault(), { passive: false }));
   kb.addEventListener("contextmenu", e => e.preventDefault());
