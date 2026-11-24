@@ -57,6 +57,8 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .seg button.on{background:#fff;color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .row{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
 .row+.row{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+.seg.mini{flex:none;padding:3px}
+.seg.mini button{flex:none;padding:6px 10px;font-size:13px}
 .row .l b{display:block;font-size:14.5px;font-weight:500}
 .row .l span{font-size:12.5px;color:var(--mute)}
 .sw{width:46px;height:28px;border-radius:14px;background:#D1D6DB;position:relative;transition:.2s;flex:none}
@@ -133,6 +135,26 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .qfoot{padding:6px 6px calc(var(--sab) + 8px);border-top:1px solid var(--line);background:#F7F8FA;touch-action:manipulation}
 #btnNext{margin:6px 10px 4px;width:calc(100% - 20px)}
 [hidden]{display:none!important}
+.pc-keys{display:none}
+/* ── PC mode: physical keyboard, wider card ── */
+html.pc body{align-items:center}
+html.pc #app{max-width:760px;height:min(calc(100dvh - 48px),900px);border-radius:24px;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 24px 70px rgba(0,0,0,.10)}
+html.pc .kb{display:none}
+html.pc .home-scroll{padding:32px 40px}
+html.pc .weeks{grid-template-columns:1fr 1fr}
+html.pc .home-foot{display:flex;gap:10px;padding-left:40px;padding-right:40px}
+html.pc .home-foot .btn{flex:1;margin:0}
+html.pc .qbody{padding-left:48px;padding-right:48px}
+html.pc .en{font-size:22px}
+html.pc .ko{font-size:17px}
+html.pc .acr{font-size:42px}
+html.pc .qfoot{padding:12px 40px 16px}
+html.pc .tools{margin:0 0 10px}
+html.pc .tool kbd,html.pc .pc-keys kbd{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--mute);background:var(--bg);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 5px;margin-left:4px}
+html.pc .pc-keys{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--mute);padding:4px 0 2px}
+.tool kbd{display:none}
+html.pc .tool kbd{display:inline}
+html.pc .swipe-tip{cursor:pointer}
 .kb{display:grid;gap:7px;padding:2px 3px 0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;overscroll-behavior:contain}
 .kr{display:flex;gap:5px;justify-content:center}
 .key{flex:none;width:calc((100% - 45px) / 10);height:46px;border-radius:9px;background:#fff;box-shadow:0 1px 0 #C9CED4;font-size:20px;font-weight:500;color:var(--ink);display:grid;place-items:center;touch-action:manipulation;transition:background .05s}
@@ -248,6 +270,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
       <div class="sec">
         <h2>설정</h2>
         <div class="row"><div class="l"><b>빈칸 길이 숨기기</b><span>글자 수로 정답을 짐작하지 못하게 해요</span></div><button class="sw" id="swHide" aria-label="빈칸 길이 숨기기"></button></div>
+        <div class="row"><div class="l"><b>화면 모드</b><span id="viewSub">기기에 맞춰 자동으로 바뀌어요</span></div><div class="seg mini" id="segView"><button data-v="auto">자동</button><button data-v="m">모바일</button><button data-v="pc">PC</button></div></div>
         <div class="row"><div class="l"><b>효과음</b><span>정답·오답 소리</span></div><button class="sw" id="swSound" aria-label="효과음"></button></div>
         <div class="row"><div class="l"><b>정답 문장 읽어주기</b><span>맞히면 영어 예문을 소리로 들려줘요</span></div><button class="sw" id="swSpeak" aria-label="정답 문장 읽어주기"></button></div>
       </div>
@@ -282,9 +305,10 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
     </div>
     <div class="qfoot">
       <div class="tools" id="tools">
-        <button class="tool" id="btnHint"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>힌트 보기</button>
-        <button class="tool" id="btnReveal"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>정답 보기</button>
+        <button class="tool" id="btnHint"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>힌트 보기<kbd>Tab</kbd></button>
+        <button class="tool" id="btnReveal"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>정답 보기<kbd>Shift+Enter</kbd></button>
       </div>
+      <div class="pc-keys"><span><kbd>Enter</kbd> 확인 · 다음</span><span><kbd>Backspace</kbd> 지우기</span><span><kbd>←</kbd> 이전 문제</span></div>
       <div class="kb" id="kb"></div>
       <button class="btn pri" id="btnNext" hidden>다음 문제</button>
     </div>
@@ -1204,7 +1228,7 @@ const label = it => it.abbr ? it.acr : it.a;
 
 /* ── storage (best effort) ── */
 const KEY = "netvoca.v1";
-let S = { mode: "term", weeks: [1,2,3,4,5,6,7,9], count: 20, hide: false, sound: true, speak: true, wrong: [], mastered: [] };
+let S = { mode: "term", weeks: [1,2,3,4,5,6,7,9], count: 20, hide: false, sound: true, speak: true, view: "auto", wrong: [], mastered: [] };
 let savedWv = 2;
 try { const raw = localStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); savedWv = o.wv || 1; S = Object.assign(S, o); } } catch (e) {}
 // weeks added later (7·9, then 5): select them once for people who saved a selection before that
@@ -1214,6 +1238,18 @@ S.weeks = [...new Set(S.weeks)].sort((a, b) => a - b);
 S.wv = 3;
 S.wrong = S.wrong.filter(id => BY_ID.has(id)); S.mastered = S.mastered.filter(id => BY_ID.has(id));
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+/* ── device mode: PC = mouse/trackpad + physical keyboard ── */
+const pcQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+const autoPC = () => pcQuery.matches && !(navigator.maxTouchPoints > 0 && window.innerWidth < 700);
+function applyView(){
+  const pc = S.view === "pc" || (S.view === "auto" && autoPC());
+  document.documentElement.classList.toggle("pc", pc);
+  return pc;
+}
+(pcQuery.addEventListener ? pcQuery.addEventListener("change", applyView) : pcQuery.addListener(applyView));
+window.addEventListener("resize", applyView);
+applyView();
 
 /* ── viewport fit (keyboard) ── */
 function fit(){
@@ -1289,6 +1325,9 @@ function renderHome(){
   document.querySelectorAll("#segCount button").forEach(b => b.classList.toggle("on", Number(b.dataset.v) === S.count));
   $("swHide").classList.toggle("on", S.hide);
   $("swSound").classList.toggle("on", S.sound);
+  document.querySelectorAll("#segView button").forEach(b => b.classList.toggle("on", b.dataset.v === S.view));
+  const pcNow = applyView();
+  $("viewSub").textContent = S.view === "auto" ? `기기에 맞춰 자동으로 바뀌어요 · 지금은 ${pcNow ? "PC" : "모바일"}` : (pcNow ? "실제 키보드로 입력해요" : "화면 키보드로 입력해요");
   $("swSpeak").classList.toggle("on", S.speak);
   const n = S.count ? Math.min(S.count, pool) : pool;
   const st = $("btnStart"); st.disabled = pool === 0; st.textContent = pool ? `${n}문제 시작하기` : "주차를 선택하세요";
@@ -1297,6 +1336,7 @@ function renderHome(){
 document.querySelectorAll("#modeSeg button").forEach(b => b.onclick = () => { S.mode = b.dataset.v; save(); renderHome(); });
 document.querySelectorAll("#segCount button").forEach(b => b.onclick = () => { S.count = Number(b.dataset.v); save(); renderHome(); });
 $("swHide").onclick = () => { S.hide = !S.hide; save(); renderHome(); };
+document.querySelectorAll("#segView button").forEach(b => b.onclick = () => { S.view = b.dataset.v; save(); renderHome(); });
 $("swSound").onclick = () => { S.sound = !S.sound; save(); renderHome(); if (S.sound) sndHint(); };
 $("swSpeak").onclick = () => { S.speak = !S.speak; save(); renderHome(); };
 $("btnStart").onclick = () => {
@@ -1500,6 +1540,8 @@ document.addEventListener("keydown", e => {
   }
   if (e.key === "ArrowLeft" && !e.metaKey) { openReview(); return; }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "Tab") { e.preventDefault(); if (!e.shiftKey) $("btnHint").click(); return; }
+  if (e.key === "Enter" && e.shiftKey) { e.preventDefault(); if (!cur.done) $("btnReveal").click(); return; }
   if (e.key === "Enter") { e.preventDefault(); main(); return; }
   if (cur.done) return;
   if (e.key === "Backspace") { e.preventDefault(); backspace(); return; }
