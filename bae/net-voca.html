@@ -87,6 +87,12 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .chip{font-size:12px;font-weight:700;padding:5px 9px;border-radius:8px;background:var(--bg);color:var(--ink2)}
 .chip.g{background:var(--g-bg);color:var(--g-ink)}
 .chip.o{background:var(--o-bg);color:#C46A00}
+.chip.imp{letter-spacing:.5px}
+.chip.imp i{font-style:normal;color:#D1D6DB}
+.chip.i3{background:#FFF4D6;color:#B7791F}
+.chip.i2{background:var(--bg);color:#8A6D1F}
+.chip.i1{background:var(--bg);color:var(--mute)}
+.li .w .st{display:block;font-size:10.5px;letter-spacing:.5px;color:#C9A227;margin-top:2px}
 .qcard{position:relative}
 .en{font-size:21px;line-height:1.75;font-weight:700;letter-spacing:-.2px;word-break:keep-all;overflow-wrap:break-word;margin:0}
 .blanks{display:inline-flex;flex-wrap:wrap;gap:6px;vertical-align:middle;margin:0 2px}
@@ -1210,6 +1216,19 @@ const ABBR_Q = {
   "9:SNAT": "Public 서브넷의 출구 변환 장치가 Private 서버의 출발지 IP·포트를 자기 공인 쪽 값으로 바꿔 내보내는 방식."
 };
 
+/* 중요도: 강의자료 등장 빈도(총 횟수·등장 주차 수) + 과목 핵심도 판단. 3=핵심, 2=중요(기본), 1=참고 */
+const IMP_T = {
+ 3: {1:"latency|bandwidth|throughput|RTT|protocol", 2:"subnet mask|CIDR|default gateway|routing table|longest prefix match|MAC address|private IP|public IP|NAT|DHCP|ARP|port", 3:"TCP|UDP|socket|3-way handshake|SYN|ACK|sequence number|4-way handshake|TIME_WAIT|flow control|congestion control|sliding window|head-of-line blocking|QUIC", 4:"DNS|resolver|TTL|stateless|idempotent|Keep-Alive|multiplexing|CORS", 5:"resource|representation|Uniform Interface|PATCH|PUT|Created|No Content|Same-Origin Policy|preflight|Access-Control-Allow-Origin|OpenAPI", 6:"authentication|authorization|Unauthorized|Forbidden|certificate|Root CA|hash|salt|MFA|cookie|session ID|HttpOnly|SameSite|JWT|access token|refresh token|OAuth|XSS|CSRF|SQL injection", 7:"polling|long polling|WebSocket|full-duplex|Upgrade|broker|topic|publish subscribe|retained message|last will|at most once|at least once|exactly once", 9:"region|availability zone|public subnet|private subnet|internet gateway|NAT gateway|stateful|stateless|VPC peering"},
+ 1: {1:"on-premise", 2:"reverse tunnel|lease time", 3:"backlog", 4:"fragment|Alt-Svc|connection ID", 5:"Code on Demand|Pydantic|response_model|path parameter|Tolerant Reader|design-first|sticky session|Access-Control-Expose-Headers|Vary|GraphQL", 6:"clickjacking|defense in depth", 7:"opcode|masking|offer|mesh", 9:"private hosted zone|split-horizon|Reachability Analyzer|plan|destroy|map_public_ip_on_launch"}
+};
+const IMP_A = {
+ 3: {1:"IP|TCP|UDP|DNS|HTTP|REST|MQTT|VPC|NAT|CDN|TLS|API|LAN|WAN|RTT|ISP|QUIC|IoT", 2:"IPv4|IPv6|CIDR|DHCP|ARP|MAC|ACK|SSH|AZ|IGW|VPN|HTTPS", 3:"SYN|FIN|RST|MSS|MTU|RTO|rwnd|cwnd|AIMD|HOL|SSE", 4:"URL|FQDN|TLD|TTL|CNAME|NXDOMAIN|JSON|CORS|CA|JWT|A", 5:"CRUD|SOP", 6:"MITM|XSS|CSRF|SQLi|MFA|OAuth|AuthN|AuthZ", 7:"WebRTC|STUN|TURN|ICE|P2P|QoS|LWT", 9:"EIP|IAM|HA"},
+ 1: {1:"PC", 2:"GCP|WSL", 3:"FCS|LLM|Recv-Q", 4:"CAA|SPF|DKIM|UTF|ECH|ACME|TTFT|SLO|IN|rd|ra|aa|qr|TC|GMT|Alt-Svc", 5:"POX|CSV|ISO|PHP|JSP|TS", 6:"PIN|SMS|ES256|RFC|BCP|CAPTCHA|ORM|iat|nbf|jti|PEM|KST", 7:"srflx|PUBREC|PUBREL|PUBCOMP|PINGRESP|DUP|GUID|RSV|RAM|SRAM|CPU", 9:"CAPEX|OPEX|LCU|UDR|ASG"}
+};
+const IMP = {};
+for (const [lv, by] of Object.entries(IMP_T)) for (const [w, s] of Object.entries(by)) s.split("|").forEach(a => IMP[w + ":" + a] = +lv);
+for (const [lv, by] of Object.entries(IMP_A)) for (const [w, s] of Object.entries(by)) s.split("|").forEach(a => IMP["A:" + w + ":" + a] = +lv);
+
 </script>
 <script>
 (function(){
@@ -1222,6 +1241,10 @@ const koHTML = s => esc(s).replace(/\[(.+?)\]/g, "<mark>$1</mark>");
 const koPlain = s => s.replace(/\[(.+?)\]/g, "$1");
 DATA.forEach(x => { x.id = x.w + ":" + x.a; });
 ABBR.forEach(x => { x.id = "A:" + x.w + ":" + x.acr + (x.sfx ? ":" + x.sfx : ""); x.q = ABBR_Q[x.w + ":" + x.acr + (x.sfx ? ":" + x.sfx : "")] || ""; });
+DATA.concat(ABBR).forEach(x => { x.imp = IMP[x.id] || (x.abbr && IMP["A:" + x.w + ":" + x.acr]) || 2; });
+const IMP_L = { 3: "핵심", 2: "중요", 1: "참고" };
+const stars = n => "★".repeat(n) + `<i>${"★".repeat(3 - n)}</i>`;
+const impChip = it => `<span class="chip imp i${it.imp}">${stars(it.imp)} ${IMP_L[it.imp]}</span>`;
 const BY_ID = new Map(DATA.concat(ABBR).map(x => [x.id, x]));
 const SET = () => S.mode === "abbr" ? ABBR : DATA;
 const label = it => it.abbr ? it.acr : it.a;
@@ -1368,7 +1391,7 @@ function load(){
   cur = { it: q.it, again: q.again, attempts: 0, hint: false, revealed: false, done: false, buf: [], lock: 0, marks: [] };
   const it = cur.it;
   progress();
-  $("chips").innerHTML = `<span class="chip">${WEEKS[it.w].t}</span>` + (cur.again ? `<span class="chip o">다시 나온 문제</span>` : "") + (Q.hist.length ? `<button class="swipe-tip" id="tipPrev">‹ 이전 문제</button>` : "");
+  $("chips").innerHTML = `<span class="chip">${WEEKS[it.w].t}</span>` + impChip(it) + (cur.again ? `<span class="chip o">다시 나온 문제</span>` : "") + (Q.hist.length ? `<button class="swipe-tip" id="tipPrev">‹ 이전 문제</button>` : "");
   if ($("tipPrev")) $("tipPrev").onclick = openReview;
   if (it.abbr) {
     $("en").className = "en ab";
@@ -1680,7 +1703,7 @@ function renderReview(dir){
   const h = Q.hist[RV], it = h.it;
   const res = h.kind === "rv" ? `<span class="chip r">정답 보기</span>` : h.clean ? `<span class="chip g">한 번에 정답</span>` : `<span class="chip o">다시 풀어서 정답</span>`;
   const b = $("rvBody");
-  b.innerHTML = `<div class="chips"><span class="chip">${WEEKS[it.w].t}</span>${res}</div><div class="qcard ${h.kind === "ok" ? "ok" : "rv"}">${filledHTML(it, h.kind)}<p class="ko">${it.abbr ? `<span class="qdesc">${esc(it.q)}</span>` : koHTML(it.ko)}</p></div><div class="info on">${infoHTML(it, "rvSpk")}</div>`;
+  b.innerHTML = `<div class="chips"><span class="chip">${WEEKS[it.w].t}</span>${impChip(it)}${res}</div><div class="qcard ${h.kind === "ok" ? "ok" : "rv"}">${filledHTML(it, h.kind)}<p class="ko">${it.abbr ? `<span class="qdesc">${esc(it.q)}</span>` : koHTML(it.ko)}</p></div><div class="info on">${infoHTML(it, "rvSpk")}</div>`;
   $("rvSpk").onclick = () => speak(fullEn(it));
   $("rvCnt").textContent = `이전 문제 ${RV + 1} / ${Q.hist.length}`;
   $("rvPrev").disabled = RV === 0;
@@ -1755,7 +1778,7 @@ function results(early){
   const arc = $("ringArc"); arc.style.strokeDashoffset = 351.86;
   requestAnimationFrame(() => requestAnimationFrame(() => { arc.style.strokeDashoffset = 351.86 * (1 - first / denom); }));
   const list = $("resList");
-  const row = r => `<button class="li" data-id="${esc(r.it.id)}"><span class="dot ${r.first ? "y" : "n"}">${r.first ? "✓" : "✕"}</span><span class="t"><b>${esc(label(r.it))}</b><span>${r.it.abbr ? esc(r.it.a) : esc(r.it.d)}</span></span><span class="w">${WEEKS[r.it.w].t}</span></button>`;
+  const row = r => `<button class="li" data-id="${esc(r.it.id)}"><span class="dot ${r.first ? "y" : "n"}">${r.first ? "✓" : "✕"}</span><span class="t"><b>${esc(label(r.it))}</b><span>${r.it.abbr ? esc(r.it.a) : esc(r.it.d)}</span></span><span class="w">${WEEKS[r.it.w].t}<span class="st">${"★".repeat(r.it.imp)}</span></span></button>`;
   list.innerHTML = !seen.length ? `<h3>푼 용어가 없어요</h3>` :
     (missed.length ? `<h3>다시 봐야 할 용어 ${missed.length}</h3>` + missed.map(row).join("") : "") +
     (first ? `<h3>한 번에 맞힌 용어 ${first}</h3>` + seen.filter(r => r.first).map(row).join("") : "");
